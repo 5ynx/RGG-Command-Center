@@ -1,0 +1,51 @@
+<div>
+    <div class="flex justify-between items-center mb-4 border-b pb-2 flex-shrink-0">
+        <h2 class="text-xl font-semibold text-gray-800">Call Records & History</h2>
+        <a href="#" class="text-sm font-medium text-emerald-400 hover:text-emerald-800">All</a>
+    </div>
+
+    <!-- Filters/Form Group -->
+    <div class="mb-4 space-y-2 text-sm flex-shrink-0">
+        <p class="text-xs text-gray-500 italic">Automatically deleted within 60 days</p>
+        <div class="flex items-center space-x-2">
+            <label class="text-gray-700 min-w-1/4">Date Filter</label>
+            <input type="date" class="border border-gray-300 rounded p-1 w-full text-xs">
+            <span class="text-gray-500 text-xs">to</span>
+            <input type="date" class="border border-gray-300 rounded p-1 w-full text-xs">
+        </div>
+        <div class="flex items-center space-x-2">
+            <label class="text-gray-700 min-w-1/4">Attended by Filter</label>
+            <input type="text" value="Jack" class="border border-gray-300 rounded p-1 w-full text-xs">
+            <button class="px-3 py-1 text-sm font-medium text-white bg-emerald-400 rounded hover:bg-emerald-700 transition">Apply</button>
+            <button class="px-3 py-1 text-sm font-medium text-gray-700 border border-gray-300 rounded hover:bg-gray-100 transition">Reset</button>
+        </div>
+    </div>
+
+    <!-- History List -->
+    <div class="space-y-3 pt-2 flex-grow overflow-y-auto">
+        <!-- Static History Record Item 1 -->
+        <div class="flex justify-between items-center text-sm border-t pt-2 pr-3">
+            <div>
+                <p class="font-medium text-gray-900">Jade Residence Main Gate</p>
+                <p class="text-gray-500">3 Hours ago</p>
+            </div>
+            <a href="#" class="text-emerald-400 hover:underline">Download</a>
+        </div>
+        <!-- Static History Record Item 2 -->
+        <div class="flex justify-between items-center text-sm border-t pt-2 pr-3">
+            <div>
+                <p class="font-medium text-gray-900">Jade Residence South Gate</p>
+                <p class="text-gray-500">Yesterday</p>
+            </div>
+            <a href="#" class="text-emerald-400 hover:underline">Download</a>
+        </div>
+        <!-- Static History Record Item 3 -->
+        <div class="flex justify-between items-center text-sm border-t pt-2 pr-3">
+            <div>
+                <p class="font-medium text-gray-900">Jade Residence North Gate</p>
+                <p class="text-gray-500">4 September 2025</p>
+            </div>
+            <a href="#" class="text-emerald-400 hover:underline">Download</a>
+        </div>
+    </div>
+</div>

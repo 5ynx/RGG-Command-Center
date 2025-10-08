@@ -1,0 +1,19 @@
+<div>
+    <div class=" bg-white rounded-xl shadow-xl/30 p-4 flex flex-col">
+        <div class="flex justify-between items-center mb-4 flex-shrink-0">
+            <h2 class="text-xl font-semibold text-gray-800">Intercom Video (Glendale Park South Gate)</h2>
+            <div class="space-x-2 flex-shrink-0">
+                <button class="px-3 py-1 text-sm font-medium text-white bg-emerald-400 rounded hover:bg-emerald-700 transition">Take Snapshot</button>
+                <button class="px-3 py-1 text-sm font-medium text-white bg-red-600 rounded hover:bg-red-700 transition">End Call</button>
+            </div>
+        </div>
+
+        <!-- Video Placeholder -->
+        <div class="video-feed flex-grow rounded-lg overflow-hidden">
+            <img src="https://placehold.co/600x400/1E40AF/FFFFFF?text=Live+Video+Feed"
+                alt="Live Intercom Video Feed"
+                class="w-full h-full object-cover"
+                onerror="this.onerror=null; this.src='https://placehold.co/600x400/1E40AF/FFFFFF?text=Video+Not+Available';">
+        </div>
+    </div>
+</div>
