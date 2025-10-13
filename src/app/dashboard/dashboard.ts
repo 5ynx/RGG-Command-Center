@@ -30,40 +30,73 @@ export class Dashboard implements OnInit {
   }
 
   private initializeAuth(): void {
-    const { userId, token } = this.test.getAuthParamsFromUrl();
-    
-    if (!userId || !token) {
-      this.authError = 'Missing authentication parameters';
-      this.isLoading = false;
-      this.showUnauthorized = true;
-      this.cdr.detectChanges();
-      return;
-    }
-    
-    this.test.validateToken(userId, token).subscribe({
-      next: (response) => {
-        console.log(response, typeof(response), response.code);
-        if (response.code === 200 && response.data) {
-          this.test.setCurrentUser(response.data);
-          this.currentUser = response.data;
-          this.authError = '';
-          this.isLoading = false;
-          this.showUnauthorized = false;
-          
-        } else {
-          this.authError = response.message || 'Authentication failed';
-        }
-        
+    setTimeout(() => {
+      if (this.test.isAuthenticated()) {
+        this.currentUser = this.test.getCurrentUserSync();
+        this.isLoading = false;
+        this.showUnauthorized = false;
+        this.clearUrlParameters();
         this.cdr.detectChanges();
-      },
-      error: (error) => {
-        this.authError = 'Network error during authentication';
+        return;
+      }
+
+      const { userId, token } = this.test.getAuthParamsFromUrl();
+      
+      if (!userId || !token) {
+        this.authError = 'Missing authentication parameters';
         this.isLoading = false;
         this.showUnauthorized = true;
         this.cdr.detectChanges();
-        console.error('Auth error:', error);
+        return;
       }
-    });
+      
+      this.test.validateToken(userId, token).subscribe({
+        next: (response) => {
+          if (response.code === 200 && response.data) {
+            this.test.setCurrentUser(response.data);
+            this.currentUser = response.data;
+            this.authError = '';
+            this.isLoading = false;
+            this.showUnauthorized = false;
+            this.clearUrlParameters();
+            
+          } else {
+            this.authError = response.message || 'Authentication failed';
+            this.isLoading = false;
+            this.showUnauthorized = true;
+            this.test.clearStorage();
+          }
+          
+          this.cdr.detectChanges();
+        },
+        error: (error) => {
+          this.authError = 'Network error during authentication';
+          this.isLoading = false;
+          this.showUnauthorized = true;
+          this.test.clearStorage(); 
+          this.cdr.detectChanges();
+          console.error('Auth error:', error);
+        }
+      });
+    }, 100);
   }
 
+  private clearUrlParameters(): void {
+    try {
+      const cleanUrl = window.location.pathname + window.location.hash;
+      window.history.replaceState({}, '', cleanUrl);
+      console.log('URL parameters cleared using history.replaceState');
+      
+    } catch (error) {
+      console.error('Error clearing URL parameters:', error);
+    }
+  }
+
+  // Optional: Add logout method
+  logout(): void {
+    this.test.clearStorage();
+    this.currentUser = null;
+    this.showUnauthorized = true;
+    this.cdr.detectChanges();
+  }
 }
