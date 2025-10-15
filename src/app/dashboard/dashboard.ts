@@ -93,10 +93,10 @@ export class Dashboard implements OnInit {
   }
 
   // Optional: Add logout method
-  logout(): void {
-    this.test.clearStorage();
-    this.currentUser = null;
-    this.showUnauthorized = true;
-    this.cdr.detectChanges();
-  }
+  // logout(): void {
+  //   this.test.clearStorage();
+  //   this.currentUser = null;
+  //   this.showUnauthorized = true;
+  //   this.cdr.detectChanges();
+  // }
 }
