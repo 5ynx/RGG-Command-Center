@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 // import { HttpClientModule } from '@angular/common/http';
 import { GetHistory, CallHistory, AttendeeSelection } from '../../service/get-history';
 import { environment } from '../../../environments/environment';
+import { CallService } from '../../service/call.service';
 
 @Component({
   selector: 'app-history-calls',
@@ -15,7 +16,8 @@ export class HistoryCalls implements OnInit {
   historyUrl: string = `${environment.apiUrl}/rgg/redirect-to-call-history`;
 
   constructor(
-    private cdr: ChangeDetectorRef
+    private cdr: ChangeDetectorRef,
+    private callService: CallService
   ) {}
 
   callHistory: CallHistory[] = [];

@@ -5,29 +5,14 @@
     </div>
 
     <div class="space-y-3 flex-grow overflow-y-auto">
-        <!-- Static Missed Call Item 1 -->
-        <div class="flex justify-between items-center text-sm border-t pt-2 pr-3">
-            <div>
-                <p class="font-medium text-gray-900">Denerslight Main Gate</p>
-                <p class="text-gray-500">3 Minutes ago</p>
+        <div *ngFor="let call of missedCallList$ | async">
+            <div class="flex justify-between items-center text-sm border-t pt-2 pr-3">
+                <div>
+                    <p class="font-medium text-gray-900">{{ call?.caller_name || "Command Center" }}</p>
+                    <p class="text-gray-500">{{ call?.create_date }}</p>
+                </div>
+                <a href="#" class="text-emerald-400 hover:underline" (click)="callBack(call)">Call Back</a>
             </div>
-            <a href="#" class="text-emerald-400 hover:underline">Call Back</a>
-        </div>
-        <!-- Static Missed Call Item 2 -->
-        <div class="flex justify-between items-center text-sm border-t pt-2 pr-3">
-            <div>
-                <p class="font-medium text-gray-900">Glendale Park South Gate</p>
-                <p class="text-gray-500">Yesterday</p>
-            </div>
-            <a href="#" class="text-emerald-400 hover:underline">Call Back</a>
-        </div>
-        <!-- Static Missed Call Item 3 -->
-        <div class="flex justify-between items-center text-sm border-t pt-2 pr-3">
-            <div>
-                <p class="font-medium text-gray-900">Ether Luxur South Gate</p>
-                <p class="text-gray-500">9 September 2025</p>
-            </div>
-            <a href="#" class="text-emerald-400 hover:underline">Call Back</a>
         </div>
     </div>
 </div>

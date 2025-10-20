@@ -5,6 +5,7 @@ import { VideoCalls } from "../components/video-calls/video-calls";
 import { HistoryCalls } from "../components/history-calls/history-calls";
 import { Test, User } from "../service/test";
 import { ActivatedRoute, Router } from "@angular/router";
+import { CallService } from '../service/call.service';
 
 @Component({
   selector: 'app-dashboard',
@@ -23,10 +24,13 @@ export class Dashboard implements OnInit {
     private route: ActivatedRoute,
     private router: Router,
     private cdr: ChangeDetectorRef,
-  ) {}
-
+    private callService: CallService
+  ) {
+  }
+  
   ngOnInit(): void {
     this.initializeAuth();
+    this.callService.initializeSocket();
   }
 
   private initializeAuth(): void {
@@ -45,7 +49,7 @@ export class Dashboard implements OnInit {
       if (!userId || !token) {
         this.authError = 'Missing authentication parameters';
         this.isLoading = false;
-        this.showUnauthorized = true;
+        this.showUnauthorized = false;
         this.cdr.detectChanges();
         return;
       }
