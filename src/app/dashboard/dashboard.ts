@@ -6,10 +6,11 @@ import { HistoryCalls } from "../components/history-calls/history-calls";
 import { Test, User } from "../service/test";
 import { ActivatedRoute, Router } from "@angular/router";
 import { CallService } from '../service/call.service';
+import { GateControl } from '../components/gate-control/gate-control';
 
 @Component({
   selector: 'app-dashboard',
-  imports: [MissedCalls, IncomingCalls, VideoCalls, HistoryCalls],
+  imports: [MissedCalls, IncomingCalls, VideoCalls, HistoryCalls, GateControl],
   templateUrl: './dashboard.html',
   styleUrl: './dashboard.scss'
 })

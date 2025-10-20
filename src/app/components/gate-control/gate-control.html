@@ -1,0 +1,52 @@
+<div>
+    <div class="flex justify-between items-center pb-2 flex-shrink-0">
+        <h2 class="text-xl font-semibold text-gray-800">Gate Control</h2>
+    </div>
+
+    <div class="space-y-3 flex-grow overflow-y-auto w-100">
+        <!-- Static Incoming Call Item 1 -->
+        <div class="flex flex-row justify-content-between align-items-start border-t pt-2 pr-3">
+            <div class="font-medium w-50">
+                <p class="font-medium text-gray-900" *ngIf="!selectedProject">Project</p>
+                <p class="font-medium text-gray-900 mt-2" *ngIf="selectedProject">Project</p>
+            </div>
+            <div class="px-2 w-50">
+                <div class="w-50 flex flex-row">
+                    <div *ngIf="selectedProject" class="p-2 flex flex-row align-items-center me-3 border-1" style="border-radius: 5px; height: 40px;">
+                        <svg width="20px" height="20px" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" (click)="selectProject(selectedProject)">
+                            <path d="M10.0303 8.96965C9.73741 8.67676 9.26253 8.67676 8.96964 8.96965C8.67675 9.26255 8.67675 9.73742 8.96964 10.0303L10.9393 12L8.96966 13.9697C8.67677 14.2625 8.67677 14.7374 8.96966 15.0303C9.26255 15.3232 9.73743 15.3232 10.0303 15.0303L12 13.0607L13.9696 15.0303C14.2625 15.3232 14.7374 15.3232 15.0303 15.0303C15.3232 14.7374 15.3232 14.2625 15.0303 13.9696L13.0606 12L15.0303 10.0303C15.3232 9.73744 15.3232 9.26257 15.0303 8.96968C14.7374 8.67678 14.2625 8.67678 13.9696 8.96968L12 10.9393L10.0303 8.96965Z" fill="#1C274C"/>
+                            <path fill-rule="evenodd" clip-rule="evenodd" d="M12 1.25C6.06294 1.25 1.25 6.06294 1.25 12C1.25 17.9371 6.06294 22.75 12 22.75C17.9371 22.75 22.75 17.9371 22.75 12C22.75 6.06294 17.9371 1.25 12 1.25ZM2.75 12C2.75 6.89137 6.89137 2.75 12 2.75C17.1086 2.75 21.25 6.89137 21.25 12C21.25 17.1086 17.1086 21.25 12 21.25C6.89137 21.25 2.75 17.1086 2.75 12Z" fill="#1C274C"/>
+                        </svg>
+                        <span class="text-gray-500 ms-2 overflow-y-scroll" style="outline: none; width: 100%; margin-top: -2px;">{{ selectedProject.name }}</span>
+                    </div>
+                    <input class="text-gray-500" placeholder="Search project.." (keyup)="searchProject()" [(ngModel)]="search_project" style="outline: none; width: 100%;"/>
+                </div>
+                <div *ngIf="search_project && FilteredProjects.length > 0" class="w-50" >
+                    @for (project of FilteredProjects; track project.id) {
+                        <div class="w-50 p-2 rounded-2 text-gray-700" style="background-color: #e6e6e6;" (click)="selectProject(project)">
+                            <input [checked]="getCheckValue(project.id)" type="checkbox" style="accent-color: black;">
+                            <label class="ms-2">{{ project.name }}</label>
+                        </div>
+                    }
+                </div>
+                <div *ngIf="search_project && FilteredProjects.length == 0" class="w-50" >
+                        <div class="w-50 p-2 rounded-2 text-gray-700" style="background-color: #e6e6e6; font-style: italic;">
+                            No project found
+                        </div>
+                </div>
+            </div>
+        </div>
+        <div *ngFor="let intercom of Intercoms">
+            <div class="flex justify-between items-center text-sm border-t pt-2 pr-3">
+                <div class="flex items-center">
+                    <p class="font-medium text-gray-900">{{ intercom?.name || "Gate" }}</p>
+                    <!-- atau lihat semua -->
+                </div>
+                <div class="space-x-2 flex-shrink-0" >
+                    <button class="text-emerald-400 hover:text-emerald-600 font-medium p-1 rounded hover:bg-emerald-50" (click)="openGate(intercom)">Open Gate</button>
+                    <button class="text-red-600 hover:text-red-800 font-medium p-1 rounded hover:bg-red-50" (click)="closeGate(intercom)">Close Gate</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

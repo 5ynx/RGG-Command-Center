@@ -1092,7 +1092,13 @@ export class CallService implements OnDestroy {
       },
       error: (err) => console.error('Error updating call state:', err),
     });
+  }}
+
+  async openGate(intercom_id: any) {
+    this.socket.emit('intercom-open-gate', { intercom_id: intercom_id });
   }
 
+  async closeGate(intercom_id: any) {
+    this.socket.emit('intercom-close-gate', { intercom_id: intercom_id });
   }
 }
