@@ -993,7 +993,7 @@ export class CallService implements OnDestroy {
 
     this.mediaRecorder.onstop = () => {
       const blob = new Blob(this.recordedChunks, {
-        type: 'audio/webm'
+        type: 'video/webm'
       });
 
       const reader = new FileReader();
