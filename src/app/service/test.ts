@@ -39,6 +39,7 @@ export class Test {
     if (this.isBrowser) {
       setTimeout(() => {
         const storedUser = this.getStoredUser();
+        console.log("check heree -->", storedUser)
         this.currentUser.next(storedUser);
         this.storageInitialized = true;
       });
@@ -83,6 +84,42 @@ export class Test {
   }
 
   private getStoredUser(): User | null {
+    if (!this.isBrowser) {
+      return null;
+    }
+
+    try {
+      const stored = localStorage.getItem(this.STORAGE_KEY);
+      
+      if (!stored) {
+        return null;
+      }
+
+      const authData = JSON.parse(stored);
+      
+      if (!authData.user || !authData.timestamp) {
+        this.clearStorage();
+        return null;
+      }
+
+      const timestamp = authData.timestamp;
+      const now = Date.now();
+      const twentyFourHours = 24 * 60 * 60 * 1000;
+      
+      if (now - timestamp > twentyFourHours) {
+        this.clearStorage();
+        return null;
+      }
+
+      return authData.user;
+
+    } catch (error) {
+      this.clearStorage();
+      return null;
+    }
+  }
+
+  getStoredUserPublic(){
     if (!this.isBrowser) {
       return null;
     }

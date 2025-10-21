@@ -5,6 +5,7 @@ import { environment } from '../../environments/environment';
 import { ActivatedRoute } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
 import { UrlApiService } from './url-api/url-api.service';
+import { Test } from './test';
 
 export interface AuthResponse {
   code: number;
@@ -46,10 +47,12 @@ export class CallService implements OnDestroy {
   private pendingCandidates: RTCIceCandidate[] = [];
   private callerpendingCandidates: RTCIceCandidate[] = [];
   private remoteDescriptionSet = false;
+  private callRecordHistoryId = 0;
   private temporaryOffer: any;
 
   audioStatus = new BehaviorSubject<string>('');
-  callActionStatus = new BehaviorSubject<string>('');
+  callActionStatusSubject = new BehaviorSubject<string>('');
+  callActionStatus$ = this.callActionStatusSubject.asObservable();
   private incomingCallListSubject = new BehaviorSubject<any[]>([]);
   incomingCallList$ = this.incomingCallListSubject.asObservable();
   private missedCallListSubject = new BehaviorSubject<any[]>([]);
@@ -60,21 +63,27 @@ export class CallService implements OnDestroy {
   constructor(
     private route: ActivatedRoute,
     protected http: HttpClient,
-    private ApiUrl: UrlApiService
+    private ApiUrl: UrlApiService,
+    private test: Test
   ) {
-    this.initializeSocket();
+    // this.initializeSocket();
   }
 
   async initializeSocket() {
     try{
       if (this.initialized) return;
       this.initialized = true;
-      const params = this.route.snapshot.queryParams;
-      this.userId = parseInt(params['user_id'], 0);
-      this.userName = `Command Center - ${parseInt(params['user_id'], 0)}`;
+      const user = this.test.getStoredUserPublic();
+      if (!user) {
+        console.error('User belum login.');
+        return;
+      }
+      const currentUser = Array.isArray(user) ? user[0] : user;
+      this.userId = currentUser.user_id;
+      this.userName = `Command Center - ${currentUser.user_id}`;
     
       this.socket = io('http://192.168.1.109:8091', {
-        query: { uniqueId: params['user_id'] ? `RGG-${params['user_id']}` : 'Public-user' },
+        query: { uniqueId: currentUser.user_id ? `RGG-${currentUser.user_id}` : 'Public-user' },
       });
       this.refreshCallLog();
 
@@ -178,7 +187,7 @@ export class CallService implements OnDestroy {
       this.pendingCandidates = [];
       this.callerpendingCandidates = [];
       this.remoteDescriptionSet = false;
-      this.callActionStatus.next('');
+      this.callActionStatusSubject.next('');
       this.ongoingCallRecordSubject.next(null);
 
       localStorage.removeItem('callData');
@@ -345,6 +354,67 @@ export class CallService implements OnDestroy {
     return 'done'
   }
 
+  async createOfferRecord(receiverPhone: any = false, receiverId: any = false, unit_id: any = false, isResident: any = false, callRecord: any) {
+    if (!receiverId && !receiverPhone && !unit_id) {
+      return;
+    }
+    this.ongoingCallRecordSubject.next(callRecord);
+    this.callActionStatusSubject.next('calling');
+
+    await this.startLocalStream();
+
+    this.peerConnection = new RTCPeerConnection({ iceServers: this.iceServers, iceTransportPolicy: 'all' });
+
+    this.localStream.getTracks().forEach(track => {
+      this.peerConnection.addTrack(track, this.localStream);
+    });
+
+    this.peerConnection.onicecandidate = (event) => {
+      if (event.candidate) {
+        this.socket.emit('ice-candidate', event.candidate);
+        this.callerpendingCandidates.push(event.candidate);
+      }
+    };
+
+    this.peerConnection.ontrack = (event) => {
+      this.remoteStream = event.streams[0];
+      const remoteVideo: HTMLVideoElement = document.getElementById('remote-video') as HTMLVideoElement;
+      remoteVideo.srcObject = this.remoteStream;
+    };
+
+    this.peerConnection.oniceconnectionstatechange = () => {
+      const state = this.peerConnection.iceConnectionState;
+
+      switch (state) {
+        case "checking":
+          this.updateAudioStatus("Connecting audio...");
+          break;
+        case "connected":
+        case "completed":
+          this.updateAudioStatus("Audio connected");
+          break;
+      }
+    };
+
+    const offer = await this.peerConnection.createOffer();
+    await this.peerConnection.setLocalDescription(offer);
+
+    this.callerName = this.userName;
+    this.callerId = this.userId;
+    console.log(receiverId)
+    this.socket.emit('offer', {
+      offerObj: offer,
+      receiverPhone: receiverPhone,
+      receiverId: receiverId,
+      callerName: this.callerName,
+      callerId: this.callerId,
+      unitId: unit_id,
+      isResident: isResident
+    });
+
+    return 'done'
+  }
+
   async handleOffer(offer: any) {
     console.log(offer)
     await this.startLocalStream();
@@ -397,6 +467,9 @@ export class CallService implements OnDestroy {
   async handleAnswer(answer: any) {
     // await this.stopOutgoingRingtone();
     // await this.stopRingtone();
+    this.callActionStatusSubject.next('');
+    this.createCallRecordHistory(this.ongoingCallRecordSubject.value);
+    this.updateCallRecordState(this.ongoingCallRecordSubject.value.id, 'accepted');
     this.callerName = answer.callerName;
     this.receiverName = answer.receiverName;
     this.receiverSocketId = answer.receiverSocketId;
@@ -578,6 +651,7 @@ export class CallService implements OnDestroy {
     // await this.endCallRecord(this.ongoingCallRecord$);
 
     this.ongoingCallRecordSubject.next(callRecord);
+    this.createCallRecordHistory(callRecord);
     console.log("======data");
     console.log(this.ongoingCallRecord$)
     this.callerName = callRecord.caller_name;
@@ -682,7 +756,7 @@ export class CallService implements OnDestroy {
   }
 
   async handleOngoingCallModal() {
-    console.log("Trigger kash herrrrr");
+    console.log("Trigger kash herrrrr ---->", this.targetSocketIds);
     if (this.targetSocketIds) {
       let newTargetSocketIds = this.targetSocketIds.filter((target: any) => target != this.receiverSocketId);
       this.socket.emit('reject-call', {
@@ -766,7 +840,7 @@ export class CallService implements OnDestroy {
       this.peerConnection = null!;
     }
     await this.closeModal();
-    this.stopRecordingWithWebAudio()
+    // this.stopRecordingWithWebAudio()
     this.resetCallData();
   }
 
@@ -775,6 +849,8 @@ export class CallService implements OnDestroy {
     // await this.stopRingtone();
     await this.closeModal();
     this.resetCallData();
+    this.refreshCallLog();
+    console.log("get rejectted -->")
   }
 
   async rejectCallRecord(callRecord: any) {
@@ -1073,7 +1149,7 @@ export class CallService implements OnDestroy {
     });
   }
 
-  updateCallRecordState(recordId: Number, state: String){{
+  async updateCallRecordState(recordId: Number, state: String){{
     const apiUrl = `${environment.apiUrl}/rgg/update-state`;
     const body = {
       id: recordId,
@@ -1095,5 +1171,27 @@ export class CallService implements OnDestroy {
 
   async closeGate(intercom_id: any) {
     this.socket.emit('intercom-close-gate', { intercom_id: intercom_id });
+  }
+
+  createCallRecordHistory(callRecord: any){{
+    const apiUrl = `${environment.apiUrl}/rgg/create-records`;
+    const body = {
+      intercom_id: callRecord.intercom_id,
+      caller_name: callRecord.caller_name,
+      attended_by: this.userId,
+    };
+    
+    this.http.post<any>(apiUrl, body).subscribe({
+      next: (response) => {
+        console.log('Create call record history:', response);
+        this.refreshCallLog();
+        this.callRecordHistoryId = response.data;
+        console.log(this.callRecordHistoryId);
+      },
+      error: (err) => console.error('Error creating call record history:', err),
+    });
+
+  }
+
   }
 }

@@ -5,21 +5,21 @@
             <div class="space-x-2 flex-shrink-0">
                 <button class="px-3 py-1 text-sm font-medium text-white bg-emerald-400 rounded hover:bg-emerald-700 transition">Take Snapshot</button>
                 <button class="px-3 py-1 text-sm font-medium text-white bg-red-600 rounded hover:bg-red-700 transition" (click)="endCall()">End Call</button>
-                <button class="px-3 py-1 text-sm font-medium text-white bg-green-600 rounded hover:bg-green-700 transition" (click)="triggerCall()">Call</button>
             </div>
         </div>
 
         <!-- Video Placeholder -->
         <video id="local-video" class="hidden"></video>
-        <div class="w-full h-full">
+        <div class="w-full h-full" [ngClass]="{'hidden': callStatus == 'calling'}">
             <video id="remote-video" class="rounded-lg bg-black w-full aspect-16/9 object-cover"></video>
         </div>
-        <!-- <div class="video-feed flex-grow rounded-lg overflow-hidden">
-            
-            <img src="https://placehold.co/600x400/1E40AF/FFFFFF?text=Live+Video+Feed"
-                alt="Live Intercom Video Feed"
-                class="w-full h-full object-cover"
-                onerror="this.onerror=null; this.src='https://placehold.co/600x400/1E40AF/FFFFFF?text=Video+Not+Available';">
-        </div> -->
+        <div *ngIf="callStatus == 'calling'">
+            <div
+              class="rounded-lg bg-black w-full aspect-video flex flex-col items-center justify-center text-white text-xl font-semibold space-y-2"
+            >
+              <span>{{ ongoingCallRecord?.caller_name }}</span>
+              <span class="animate-pulse text-lg">Calling...</span>
+            </div>
+        </div>
     </div>
 </div>

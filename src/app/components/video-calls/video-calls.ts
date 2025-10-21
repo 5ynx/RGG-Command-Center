@@ -1,31 +1,43 @@
-import { Component } from '@angular/core';
+import { ChangeDetectorRef, Component, NgZone } from '@angular/core';
+import { CommonModule } from '@angular/common';
 import { CallService } from '../../service/call.service';
 
 @Component({
   selector: 'app-video-calls',
-  imports: [],
+  imports: [CommonModule],
+  standalone: true,
   templateUrl: './video-calls.html',
   styleUrl: './video-calls.scss'
 })
 export class VideoCalls {
-
   
-  constructor(private callService: CallService){}
+  constructor(
+    private callService: CallService, 
+    private zone: NgZone,
+    private cdr: ChangeDetectorRef
+  ){}
 
-  
   ongoingCallRecord: any;
-  
-  triggerCall(){
-    this.callService.createOffer(false, 'RGG-2', false, true);
-  }
+  callStatus: any;
+
   ngOnInit(): void {
     this.callService.ongoingCallRecord$.subscribe(record => {
       this.ongoingCallRecord = record;
     });
+
+    this.callService.callActionStatus$.subscribe(status => {
+      this.zone.run(() => {
+        this.callStatus = status;
+        this.cdr.markForCheck();
+      });
+    });
   }
 
   endCall() {
-    console.log(this.ongoingCallRecord);
-    this.callService.endCallRecord(this.ongoingCallRecord);
+    if (this.callStatus == 'calling'){
+      this.callService.rejectCall()
+    }else{
+      this.callService.endCallRecord(this.ongoingCallRecord);
+    }
   }
 }

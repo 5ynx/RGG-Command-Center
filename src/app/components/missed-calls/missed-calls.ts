@@ -21,13 +21,8 @@ export class MissedCalls {
 
   callBack(callRecord:any){
     if(callRecord.intercom_id){
-      this.callService.createOffer(false, `Intercom-${callRecord.intercom_id}`, false, true);
-    }else if(callRecord.rgg_id){
-      this.callService.createOffer(false, `RGG-${callRecord.rgg_id}`, false, true);
-    }else if(callRecord.project_id){
-      this.callService.createOffer(false, `Project-${callRecord.project_id}`, false, true);
-    }else if(callRecord.family_id){
-      this.callService.createOffer(false, callRecord.family_id, false, false);
+      // console.log("hello -->", callRecord.intercom_id);
+      this.callService.createOfferRecord(false, `Intercom-${callRecord.intercom_id}`, false, true, callRecord);
     }
   }
 }

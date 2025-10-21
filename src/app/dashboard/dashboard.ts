@@ -31,7 +31,6 @@ export class Dashboard implements OnInit {
   
   ngOnInit(): void {
     this.initializeAuth();
-    this.callService.initializeSocket();
   }
 
   private initializeAuth(): void {
@@ -42,6 +41,7 @@ export class Dashboard implements OnInit {
         this.showUnauthorized = false;
         this.clearUrlParameters();
         this.cdr.detectChanges();
+        this.callService.initializeSocket();
         return;
       }
 
@@ -73,6 +73,7 @@ export class Dashboard implements OnInit {
           }
           
           this.cdr.detectChanges();
+          this.callService.initializeSocket();
         },
         error: (error) => {
           this.authError = 'Network error during authentication';

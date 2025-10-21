@@ -1,7 +1,6 @@
 <div>
     <div class="flex justify-between items-center pb-2 flex-shrink-0">
         <h2 class="text-xl font-semibold text-gray-800">Missed Call List</h2>
-        <a href="#" class="text-sm font-medium text-emerald-400 hover:text-emerald-800">All</a>
     </div>
 
     <div class="space-y-3 flex-grow overflow-y-auto">
@@ -11,7 +10,7 @@
                     <p class="font-medium text-gray-900">{{ call?.caller_name || "Command Center" }}</p>
                     <p class="text-gray-500">{{ call?.create_date }}</p>
                 </div>
-                <a href="#" class="text-emerald-400 hover:underline" (click)="callBack(call)">Call Back</a>
+                <button class="text-emerald-400 hover:underline" (click)="callBack(call)">Call Back</button>
             </div>
         </div>
     </div>
