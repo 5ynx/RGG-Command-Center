@@ -4,6 +4,7 @@ import { io, Socket } from 'socket.io-client';
 import { environment } from '../../environments/environment';
 import { ActivatedRoute } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
+import { UrlApiService } from './url-api/url-api.service';
 
 export interface AuthResponse {
   code: number;
@@ -59,6 +60,7 @@ export class CallService implements OnDestroy {
   constructor(
     private route: ActivatedRoute,
     protected http: HttpClient,
+    private ApiUrl: UrlApiService
   ) {
     this.initializeSocket();
   }
@@ -1006,23 +1008,16 @@ export class CallService implements OnDestroy {
           project_id: this.project_id
         };
 
-        // this.mainVmsService.getApi(payload, '/call/post/recorded_call').subscribe({
-        //   next: (res) => console.log(res),
-        //   error: (err) => console.error(err)
-        // });
+        console.log(payload)
+
+        this.ApiUrl.urlApi('/call/post/recorded_call', payload).subscribe({
+          next: (res) => console.log(res),
+          error: (err) => console.error(err)
+        });
       };
 
       audioCtx.close()
       this.mediaRecorder.stop()
-
-      // const url = URL.createObjectURL(blob);
-      // const a = document.createElement('a');
-      // a.style.display = 'none';
-      // a.href = url;
-      // a.download = 'recorded-call.webm';
-      // document.body.appendChild(a);
-      // a.click();
-      // URL.revokeObjectURL(url);
     };
 
     this.mediaRecorder.start();
