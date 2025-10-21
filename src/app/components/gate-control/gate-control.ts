@@ -1,6 +1,6 @@
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms'
-import { ChangeDetectorRef, Component } from '@angular/core';
+import { ChangeDetectorRef, Component, ElementRef, ViewChild } from '@angular/core';
 import { UrlApiService } from '../../service/url-api/url-api.service';
 import { CallService } from '../../service/call.service';
 
@@ -19,47 +19,60 @@ export class GateControl {
 
   ngOnInit(): void {
     this.loadProjects();
+    document.addEventListener('click', this.handleClickOutside, true);
   }
 
-  Intercoms: any = []
+  ngOnDestroy() {
+    document.removeEventListener('click', this.handleClickOutside, true);
+  }
+
+  Gates: any = []
   
   isLoading = false
   errMessage = ''
 
-  getIntercoms() {
+  getGates() {
     this.isLoading = true
-    this.ApiUrl.urlApi('/rgg/get-intercom', {project_id: this.selectedProject.id}).subscribe({
+    this.Gates = []
+    this.ApiUrl.urlApi('/rgg/get-gates', {project_id: this.selectedProject.id}).subscribe({
       next: (response) => {
         this.isLoading = false;
         if (response.code === 200) {
-          this.Intercoms = response.result;
-          this.cdr.detectChanges();
+          this.Gates = response.result;
         } else {
-          this.errMessage = response.message || 'Failed to load intercom';
+          this.errMessage = response.message || 'Failed to load gates';
+        }
+        this.cdr.detectChanges();
+      },
+      error: (err) => {
+        this.isLoading = false;
+        this.errMessage = 'Error fetching data from server';
+        console.error('Error fetching load gates:', err);
+      }
+    });
+  }
+
+  openGate(gate: any, is_close: boolean = false) {
+    this.ApiUrl.urlApi('/rgg/open-barrier', {camera_id: gate.id, is_close: is_close}).subscribe({
+      next: (response) => {
+        this.isLoading = false;
+        if (response.code === 200) {
+        } else {
+          this.errMessage = response.message || 'Failed to load gates';
         }
       },
       error: (err) => {
         this.isLoading = false;
         this.errMessage = 'Error fetching data from server';
-        console.error('Error fetching load intercom:', err);
+        console.error('Error fetching load gates:', err);
       }
     });
-  }
-
-  openGate(intercom: any) {
-    console.log('open', intercom)
-    console.log(this.callService.openGate('Intercom-' + String(3)))
-  }
-
-  closeGate(intercom: any) {
-    console.log('close', intercom)
-    console.log(this.callService.openGate('Intercom-' + String(3)))
   }
 
   Projects: any = []
   FilteredProjects: any = []
   selectedProject: any = false
-  search_project = ''
+  search_project: any = ''
 
   loadProjects() {
     this.isLoading = true
@@ -68,6 +81,7 @@ export class GateControl {
         this.isLoading = false;
         if (response.code === 200) {
           this.Projects = response.result;
+          this.FilteredProjects = this.Projects
           this.cdr.detectChanges();
         } else {
           this.errMessage = response.message || 'Failed to load project';
@@ -81,23 +95,54 @@ export class GateControl {
     });
   }
 
-  searchProject() {
+  searchProject(event: KeyboardEvent) {
+    const input = event.target as HTMLInputElement;
+    if ((event.key === 'Backspace' && !this.search_project && this.selectedProject)) {
+      this.selectProject(this.selectedProject)
+    }  
+    this.search_project = input.value || ''
+    this.is_search_focus = true
     this.FilteredProjects = this.Projects.filter((item: any) => item.name.toLowerCase().includes(this.search_project))
-    console.log(this.FilteredProjects)
+  }
+
+  is_search_focus = false
+  searchFocus(is_focus: boolean = true) {
+    this.is_search_focus = is_focus
+    this.FilteredProjects = this.Projects
   }
 
   selectProject(project: any) {
     if (project.id == this.selectedProject.id) {
       this.selectedProject = false
-      this.Intercoms = []
+      this.Gates = []
     } else {
       this.selectedProject = project
       this.search_project = ''
-      this.getIntercoms()
+      this.searchComponent.nativeElement.value = ''
+      this.getGates()
     }
+    this.cdr.detectChanges()
+    this.is_search_focus = false
   }
 
   getCheckValue(project_id: number) {
     return this.selectedProject ? (project_id == this.selectedProject.id) : false
+  }
+
+  @ViewChild('searchInput') searchComponent!: ElementRef;
+  @ViewChild('selectionInput') selectionComponent!: ElementRef;
+  handleClickOutside = (event: MouseEvent) => {
+    const selectionClicked = this.selectionComponent.nativeElement.contains(event.target);
+    const searchClicked = this.searchComponent.nativeElement.contains(event.target);
+      if (!searchClicked && !selectionClicked) {
+        this.is_search_focus = false
+        this.cdr.detectChanges();
+      }
+  };
+
+  checkboxKeyed(event: KeyboardEvent, project: any) {
+    if (event.key === 'Enter') {
+      this.selectProject(project)
+    }
   }
 }
