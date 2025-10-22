@@ -1,56 +1,70 @@
-<div>
+<div class="flex flex-col h-full">
     <div class="flex justify-between items-center pb-2 flex-shrink-0">
         <h2 class="text-xl font-semibold text-gray-800">Gate Control</h2>
     </div>
 
-    <div class="space-y-3 flex-grow overflow-y-auto w-100">
-        <!-- Static Incoming Call Item 1 -->
-        <div class="flex flex-row justify-between items-center border-t pt-2">
-            <div class="font-medium w-1/3 text-sm">
-                <label class="text-gray-700 min-w-1/4">Project</label>
-            </div>
-            <div class="w-2/3">
-                <div class="w-full flex flex-row rounded py-1 px-2 text-xs space-x-3 border border-gray-300 rounded relative">
-                    <div *ngIf="selectedProject" class="p-2 flex flex-row mr-3 border-1" style="border-radius: 5px; height: 30px">
-                        <svg width="20px" height="20px" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" (click)="selectProject(selectedProject)" style="margin-top: -5px;">
-                            <path d="M10.0303 8.96965C9.73741 8.67676 9.26253 8.67676 8.96964 8.96965C8.67675 9.26255 8.67675 9.73742 8.96964 10.0303L10.9393 12L8.96966 13.9697C8.67677 14.2625 8.67677 14.7374 8.96966 15.0303C9.26255 15.3232 9.73743 15.3232 10.0303 15.0303L12 13.0607L13.9696 15.0303C14.2625 15.3232 14.7374 15.3232 15.0303 15.0303C15.3232 14.7374 15.3232 14.2625 15.0303 13.9696L13.0606 12L15.0303 10.0303C15.3232 9.73744 15.3232 9.26257 15.0303 8.96968C14.7374 8.67678 14.2625 8.67678 13.9696 8.96968L12 10.9393L10.0303 8.96965Z" fill="#1C274C"/>
-                            <path fill-rule="evenodd" clip-rule="evenodd" d="M12 1.25C6.06294 1.25 1.25 6.06294 1.25 12C1.25 17.9371 6.06294 22.75 12 22.75C17.9371 22.75 22.75 17.9371 22.75 12C22.75 6.06294 17.9371 1.25 12 1.25ZM2.75 12C2.75 6.89137 6.89137 2.75 12 2.75C17.1086 2.75 21.25 6.89137 21.25 12C21.25 17.1086 17.1086 21.25 12 21.25C6.89137 21.25 2.75 17.1086 2.75 12Z" fill="#1C274C"/>
-                        </svg>
-                        <span class="text-gray-500 ms-2 overflow-y-scroll" style="outline: none; width: 100%; margin-top: -2px;">{{ selectedProject.name }}</span>
-                    </div>
-                    <input #searchInput class="p-1 w-full text-xs" placeholder="Search project.." (keyup)="searchProject($event)" style="outline: none;" (focus)="searchFocus(true)"/>
-                </div>
-                <div #selectionInput *ngIf="is_search_focus" class="w-[210px] absolute text-gray-700 text-xs" >
-                    @for (project of FilteredProjects; track project.id) {
-                        <div class="w-full p-2 rounded-sm" style="background-color: #f0f0f0;" (click)="selectProject(project)">
-                            <input [checked]="getCheckValue(project.id)" type="checkbox" style="accent-color: black;" (keydown)="checkboxKeyed($event, project)">
-                            <label class="ms-2">{{ project.name }}</label>
-                        </div>
-                    } @empty {
-                        <div class="w-full p-2 rounded-sm" style="background-color: #e6e6e6; font-style: italic;">
-                            No project found
-                        </div>
-                    }
-                </div>
-            </div>
+    <div class="flex flex-row justify-between items-center border-t pt-2">
+        <div class="font-medium w-1/3 text-sm">
+            <label class="text-gray-700 min-w-1/4">Project</label>
         </div>
-        <div class="border-t pt-2 flex flex-col space-y-2" *ngIf="selectedProject">
-            @for (gate of Gates; track gate.id) {
-                <div class="flex justify-between items-center text-sm">
-                    <div class="flex items-center">
-                        <p class="font-medium text-gray-900">{{ gate?.name || "Gate" }}</p>
-                        <!-- atau lihat semua -->
-                    </div>
-                    <div class="space-x-2 flex-shrink-0" >
-                        <button class="text-emerald-400 hover:text-emerald-600 font-medium p-1 rounded hover:bg-emerald-50" (click)="openGate(gate, false)">Open Gate</button>
-                        <button class="text-red-600 hover:text-red-800 font-medium p-1 rounded hover:bg-red-50" (click)="openGate(gate, true)">Close Gate</button>
-                    </div>
+        <div class="w-2/3">
+            <div class="w-full flex flex-row rounded py-1 px-2 text-xs space-x-3 border border-gray-300 rounded relative">
+                <div *ngIf="selectedProject" class="p-2 flex flex-row mr-3 border-1" style="border-radius: 5px; height: 30px">
+                    <svg width="20px" height="20px" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" (click)="selectProject(selectedProject)" style="margin-top: -5px;">
+                        <path d="M10.0303 8.96965C9.73741 8.67676 9.26253 8.67676 8.96964 8.96965C8.67675 9.26255 8.67675 9.73742 8.96964 10.0303L10.9393 12L8.96966 13.9697C8.67677 14.2625 8.67677 14.7374 8.96966 15.0303C9.26255 15.3232 9.73743 15.3232 10.0303 15.0303L12 13.0607L13.9696 15.0303C14.2625 15.3232 14.7374 15.3232 15.0303 15.0303C15.3232 14.7374 15.3232 14.2625 15.0303 13.9696L13.0606 12L15.0303 10.0303C15.3232 9.73744 15.3232 9.26257 15.0303 8.96968C14.7374 8.67678 14.2625 8.67678 13.9696 8.96968L12 10.9393L10.0303 8.96965Z" fill="#1C274C"/>
+                        <path fill-rule="evenodd" clip-rule="evenodd" d="M12 1.25C6.06294 1.25 1.25 6.06294 1.25 12C1.25 17.9371 6.06294 22.75 12 22.75C17.9371 22.75 22.75 17.9371 22.75 12C22.75 6.06294 17.9371 1.25 12 1.25ZM2.75 12C2.75 6.89137 6.89137 2.75 12 2.75C17.1086 2.75 21.25 6.89137 21.25 12C21.25 17.1086 17.1086 21.25 12 21.25C6.89137 21.25 2.75 17.1086 2.75 12Z" fill="#1C274C"/>
+                    </svg>
+                    <span class="text-gray-500 ms-2 overflow-y-scroll" style="outline: none; width: 100%; margin-top: -2px;">{{ selectedProject.name }}</span>
                 </div>
-            } @empty {
-                <div class="flex flex-row justify-center mt-2">
-                    <i class="text-sm text-center text-gray-700">No gate found for this project</i>
-                </div>
-            }
+                <input #searchInput class="p-1 w-full text-xs" placeholder="Search project.." (keyup)="searchProject($event)" style="outline: none;" (focus)="searchFocus(true)"/>
+            </div>
+            <div #selectionInput *ngIf="is_search_focus" class="w-[210px] absolute text-gray-700 text-xs" >
+                @for (project of FilteredProjects; track project.id) {
+                    <div class="w-full p-2 rounded-sm" style="background-color: #f0f0f0;" (click)="selectProject(project)">
+                        <input [checked]="getCheckValue(project.id)" type="checkbox" style="accent-color: black;" (keydown)="checkboxKeyed($event, project)">
+                        <label class="ms-2">{{ project.name }}</label>
+                    </div>
+                } @empty {
+                    <div class="w-full p-2 rounded-sm" style="background-color: #e6e6e6; font-style: italic;">
+                        No project found
+                    </div>
+                }
+            </div>
         </div>
     </div>
+    
+    <!-- Static Incoming Call Item 1 -->
+    @if (Projects.length > 0 && !isLoading) {
+        <div class="flex-1 min-h-0 border-t pt-2 mt-2">
+            <div class="flex flex-col space-y-2 h-full overflow-y-auto" *ngIf="selectedProject">
+                @for (gate of Gates; track gate.id) {
+                    <div class="flex justify-between items-center text-sm">
+                        <div class="flex items-center">
+                            <p class="font-medium text-gray-900">{{ gate?.name || "Gate" }}</p>
+                            <!-- atau lihat semua -->
+                        </div>
+                        <div class="xl:space-x-2 flex flex-col xl:flex-row">
+                            <button class="text-emerald-400 hover:text-emerald-600 font-medium p-1 rounded hover:bg-emerald-50" (click)="openGate(gate, false)">Open Gate</button>
+                            <button class="text-red-600 hover:text-red-800 font-medium p-1 rounded hover:bg-red-50" (click)="openGate(gate, true)">Close Gate</button>
+                        </div>
+                    </div>
+                } @empty {
+                    <div class="flex flex-row justify-center mt-2">
+                        <i class="text-sm text-center text-gray-700">No gate found for this project</i>
+                    </div>
+                }
+            </div>
+        </div>
+    } @else {
+        <div class="text-center py-8 border-t h-full pt-2 mt-2 flex items-center justify-center">
+            <div>
+                <div class="text-gray-400 mb-3">
+                    <svg class="w-12 h-12 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                    </svg>
+                </div>
+                <p class="text-gray-600">No project found.</p>
+            </div>
+        </div>
+    }
 </div>
