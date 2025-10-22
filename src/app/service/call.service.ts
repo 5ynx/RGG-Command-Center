@@ -49,6 +49,7 @@ export class CallService implements OnDestroy {
   private remoteDescriptionSet = false;
   private callRecordHistoryId = 0;
   private temporaryOffer: any;
+  private audioRecords: any;
 
   audioStatus = new BehaviorSubject<string>('');
   callActionStatusSubject = new BehaviorSubject<string>('');
@@ -184,6 +185,7 @@ export class CallService implements OnDestroy {
       this.targetSocketIds = null;
       this.project_id = null;
       this.callAction = '';
+      this.audioRecords = '';
       this.pendingCandidates = [];
       this.callerpendingCandidates = [];
       this.remoteDescriptionSet = false;
@@ -729,32 +731,6 @@ export class CallService implements OnDestroy {
     });
   }
 
-  async acceptCall(offer: any) {
-    // await this.stopRingtone();
-    await this.peerConnection.setRemoteDescription(new RTCSessionDescription(offer));
-    this.remoteDescriptionSet = true;
-    for (const candidate of this.pendingCandidates) {
-      await this.peerConnection.addIceCandidate(candidate);
-    }
-
-    this.localStream.getTracks().forEach(track => {
-      this.peerConnection.addTrack(track, this.localStream);
-    });
-
-    const answer = await this.peerConnection.createAnswer();
-    await this.peerConnection.setLocalDescription(answer);
-    
-    this.startRecordingWithWebAudio(this.localStream, this.remoteStream)
-
-    this.socket.emit('answer', {
-      answerObj: answer,
-      receiverName: this.receiverName,
-      callerName: this.callerName,
-      callerSocketId: this.callerSocketId,
-      receiverSocketId: this.receiverSocketId
-    });
-  }
-
   async handleOngoingCallModal() {
     console.log("Trigger kash herrrrr ---->", this.targetSocketIds);
     if (this.targetSocketIds) {
@@ -793,6 +769,25 @@ export class CallService implements OnDestroy {
     this.resetCallData();
   }
 
+  async takeSnapshotRecord(screenshotBase64: any) {
+    if(!screenshotBase64 || !this.callRecordHistoryId){
+      return;
+    }
+    
+    const apiUrl = `${environment.apiUrl}/rgg/update-records`;
+    const body = {
+      active_call_id: this.callRecordHistoryId,
+      screenshot_binary: screenshotBase64
+    };
+    
+    this.http.post<any>(apiUrl, body).subscribe({
+      next: (response) => {
+        console.log('Saving screenshot into call record history:', response);
+      },
+      error: (err) => console.error('Error saving screenshot into call record history:', err),
+    });
+  } 
+
   async endCallRecord(callRecord: any) {
     if(!callRecord){
       return;
@@ -823,7 +818,7 @@ export class CallService implements OnDestroy {
       });
     }
     await this.closeModal();
-    this.resetCallData();
+    // this.resetCallData();
   }
 
   async handleEndCall() {
@@ -840,7 +835,7 @@ export class CallService implements OnDestroy {
       this.peerConnection = null!;
     }
     await this.closeModal();
-    // this.stopRecordingWithWebAudio()
+    this.stopRecordingWithWebAudio()
     this.resetCallData();
   }
 
@@ -1043,7 +1038,6 @@ export class CallService implements OnDestroy {
   }
 
   startRecordingWithWebAudio(localStream: any, remoteStream: any) {
-
     this.recordedChunks = [];
 
     const audioCtx = new AudioContext();
@@ -1069,38 +1063,55 @@ export class CallService implements OnDestroy {
 
     this.mediaRecorder.onstop = () => {
       const blob = new Blob(this.recordedChunks, {
-        type: 'video/webm'
+        type: 'audio/webm'
       });
-
+      
       const reader = new FileReader();
       reader.readAsDataURL(blob);
       reader.onloadend = () => {
         const base64Audio = reader.result;
-
+        this.audioRecords = base64Audio;
+        
         const payload = {
           audio: base64Audio,
           caller_id: this.callerId,
           receiver_id: this.receiverId,
           project_id: this.project_id
         };
-
-        console.log(payload)
-
+        
+        // console.log(payload)
+        
         this.ApiUrl.urlApi('/call/post/recorded_call', payload).subscribe({
-          next: (res) => console.log(res),
-          error: (err) => console.error(err)
+            next: (res) => console.log(res),
+            error: (err) => console.error(err)
+          });
+
+        // Save ke Penyimpanan RGG
+        console.log('Kalau masih blm siap, selesaikan api end call records', this.callRecordHistoryId)
+
+        const apiUrl = `${environment.apiUrl}/rgg/update-records-end-call`;
+        const body = {
+          active_call_id: this.callRecordHistoryId,
+          audio_binary: this.audioRecords.split(',')[1]
+        };
+        
+        this.http.post<any>(apiUrl, body).subscribe({
+          next: (response) => {
+            console.log('Saving audio into call record history:', response);
+          },
+          error: (err) => console.error('Error saving audio into call record history:', err),
         });
+    
       };
 
       audioCtx.close()
-      this.mediaRecorder.stop()
+      // this.mediaRecorder.stop()
     };
 
     this.mediaRecorder.start();
   }
 
   stopRecordingWithWebAudio() {
-    console.log(this.callerId, this.receiverId)
     this.mediaRecorder
     this.mediaRecorder.stop();
   }

@@ -1,4 +1,4 @@
-import { ChangeDetectorRef, Component, NgZone } from '@angular/core';
+import { ChangeDetectorRef, Component, ElementRef, NgZone, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { CallService } from '../../service/call.service';
 
@@ -10,6 +10,7 @@ import { CallService } from '../../service/call.service';
   styleUrl: './video-calls.scss'
 })
 export class VideoCalls {
+  @ViewChild('remoteVideo', { static: false }) remoteVideoElement!: ElementRef<HTMLVideoElement>;
   
   constructor(
     private callService: CallService, 
@@ -19,6 +20,7 @@ export class VideoCalls {
 
   ongoingCallRecord: any;
   callStatus: any;
+  screenshotBase64: any = '';
 
   ngOnInit(): void {
     this.callService.ongoingCallRecord$.subscribe(record => {
@@ -30,6 +32,67 @@ export class VideoCalls {
         this.callStatus = status;
         this.cdr.markForCheck();
       });
+    });
+  }
+
+  async takeSnapshot() {
+    try {
+      const screenshot = await this.captureVideoScreenshot();
+      if (screenshot) {
+        this.screenshotBase64 = screenshot;
+        this.callService.takeSnapshotRecord(this.screenshotBase64);
+        this.screenshotBase64 = '';
+      }
+    } catch (error) {
+      console.error('Error capturing screenshot:', error);
+    }
+  }
+
+  private captureVideoScreenshot(): Promise<string | null> {
+    return new Promise((resolve) => {
+      const videoElement = this.remoteVideoElement?.nativeElement || 
+                          document.getElementById('remote-video') as HTMLVideoElement;
+      
+      if (!videoElement) {
+        console.error('Remote video element not found');
+        resolve(null);
+        return;
+      }
+
+      // Check if video has content
+      if (videoElement.videoWidth === 0 || videoElement.videoHeight === 0) {
+        console.error('Video element has no content');
+        resolve(null);
+        return;
+      }
+
+      // Create canvas element
+      const canvas = document.createElement('canvas');
+      const context = canvas.getContext('2d');
+      
+      if (!context) {
+        console.error('Could not get canvas context');
+        resolve(null);
+        return;
+      }
+
+      // Set canvas dimensions to match video
+      canvas.width = videoElement.videoWidth;
+      canvas.height = videoElement.videoHeight;
+
+      // Draw video frame to canvas
+      context.drawImage(videoElement, 0, 0, canvas.width, canvas.height);
+
+      // Convert to base64
+      try {
+        const base64Data = canvas.toDataURL('image/png');
+        const base64Only = base64Data.split(',')[1];
+        resolve(base64Only);
+
+      } catch (error) {
+        console.error('Error converting to base64:', error);
+        resolve(null);
+      }
     });
   }
 
