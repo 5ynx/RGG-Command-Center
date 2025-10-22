@@ -7,6 +7,7 @@ import { Test, User } from "../service/test";
 import { ActivatedRoute, Router } from "@angular/router";
 import { CallService } from '../service/call.service';
 import { GateControl } from '../components/gate-control/gate-control';
+import { environment } from '../../environments/environment';
 
 @Component({
   selector: 'app-dashboard',
@@ -42,6 +43,7 @@ export class Dashboard implements OnInit {
         this.clearUrlParameters();
         this.cdr.detectChanges();
         this.callService.initializeSocket();
+        this.cdr.markForCheck();
         return;
       }
 
@@ -52,6 +54,7 @@ export class Dashboard implements OnInit {
         this.isLoading = false;
         this.showUnauthorized = false;
         this.cdr.detectChanges();
+        this.cdr.markForCheck();
         return;
       }
       
@@ -74,6 +77,8 @@ export class Dashboard implements OnInit {
           
           this.cdr.detectChanges();
           this.callService.initializeSocket();
+          this.cdr.markForCheck();
+
         },
         error: (error) => {
           this.authError = 'Network error during authentication';
@@ -81,6 +86,7 @@ export class Dashboard implements OnInit {
           this.showUnauthorized = true;
           this.test.clearStorage(); 
           this.cdr.detectChanges();
+          this.cdr.markForCheck();
           console.error('Auth error:', error);
         }
       });
@@ -99,10 +105,11 @@ export class Dashboard implements OnInit {
   }
 
   // Optional: Add logout method
-  // logout(): void {
-  //   this.test.clearStorage();
-  //   this.currentUser = null;
-  //   this.showUnauthorized = true;
-  //   this.cdr.detectChanges();
-  // }
+  logout(): void {
+    this.test.clearStorage();
+    this.currentUser = null;
+    this.showUnauthorized = true;
+    this.cdr.detectChanges();
+    window.location.assign(`${environment.apiUrl}/web/session/logout`);
+  }
 }
