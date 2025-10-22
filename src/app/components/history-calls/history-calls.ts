@@ -4,10 +4,11 @@ import { CommonModule } from '@angular/common';
 import { GetHistory, CallHistory, AttendeeSelection } from '../../service/get-history';
 import { environment } from '../../../environments/environment';
 import { CallService } from '../../service/call.service';
+import { FormsModule } from '@angular/forms';
 
 @Component({
   selector: 'app-history-calls',
-  imports: [CommonModule],
+  imports: [CommonModule, FormsModule],
   templateUrl: './history-calls.html',
   styleUrl: './history-calls.scss'
 })
@@ -58,19 +59,23 @@ export class HistoryCalls implements OnInit {
     });
   }
 
-  applyFilters(startDate: string, endDate: string, attendantId: string): void {
+  applyFilters(attendantId: string): void {
     this.filters = {
-        start_date: startDate,
-        end_date: endDate,
+        start_date: this.startHiddenDateValue,
+        end_date: this.endHiddenDateValue,
         attended_by: attendantId
     };
     this.loadCallHistory();
   }
 
-  resetFilters(startDateEl: HTMLInputElement, endDateEl: HTMLInputElement, attendantEl: HTMLSelectElement): void {
+  resetFilters(attendantEl: HTMLSelectElement): void {
       // Reset DOM elements
-      startDateEl.value = '';
-      endDateEl.value = '';
+      this.startDateValue = '';
+      this.startHiddenDateValue = ''
+
+      this.endDateValue = '';
+      this.endHiddenDateValue = ''
+
       attendantEl.value = '';
       
       // Reset filters
@@ -129,4 +134,76 @@ export class HistoryCalls implements OnInit {
   formatDate(dateString: string): string {
     return new Date(dateString).toLocaleString();
   }
+
+  startDateValue = ''
+  startHiddenDateValue = ''
+
+  endDateValue = ''
+  endHiddenDateValue = ''
+
+  onDisplayInputClick(id: string, input_id: string) {
+    console.log(id, input_id)
+    const dateInput = document.getElementById(id) as HTMLInputElement;
+    const startInput = document.getElementById(input_id) as HTMLElement;
+    console.log(dateInput, startInput)
+    setTimeout(() => {
+
+      if (dateInput) {
+        const rect = startInput.getBoundingClientRect();
+
+        // Tempatkan date input tepat di samping (kanan) input utama
+        dateInput.style.position = 'fixed';
+        dateInput.style.top = `${rect.top}px`;
+        dateInput.style.left = `${rect.right + 5}px`; // 5px jarak di kanan
+        dateInput.style.width = '150px';
+        dateInput.style.height = 'auto';
+        dateInput.style.opacity = '0.01';
+        dateInput.style.pointerEvents = 'auto';
+        dateInput.style.zIndex = '9999';
+
+        try {
+          dateInput.focus();
+          dateInput.showPicker();
+        } catch {
+          dateInput.click();
+        }
+
+        // Setelah picker dibuka, kembalikan ke posisi tersembunyi
+        setTimeout(() => {
+          dateInput.style.position = 'absolute';
+          dateInput.style.left = '-9999px';
+          dateInput.style.opacity = '0';
+          dateInput.style.pointerEvents = 'none';
+        }, 500);
+
+      }
+    }, 100); // Delay lebih lama untuk iOS
+  }
+
+  onDateInputChange(is_start: boolean) {
+    if (is_start) {
+      if (this.startHiddenDateValue) {
+        const date = new Date(this.startHiddenDateValue);
+        this.startDateValue = this.formatDateForDisplay(date);
+      } else {
+        this.startDateValue = ''
+      }
+    } else {
+      if (this.endHiddenDateValue) {
+        const date = new Date(this.endHiddenDateValue);
+        this.endDateValue = this.formatDateForDisplay(date);
+      } else {
+        this.endDateValue = ''
+      }
+    }
+  }
+
+  formatDateForDisplay(date: Date): string {
+    const day = date.getDate().toString().padStart(2, '0');
+    const month = (date.getMonth() + 1).toString().padStart(2, '0');
+    const year = date.getFullYear();
+    return `${day}/${month}/${year}`;
+  }
+
+
 }
