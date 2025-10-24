@@ -1,161 +1,337 @@
 <div class="flex flex-col h-full">
-    <div class="flex justify-between items-center mb-4 border-b pb-2 flex-shrink-0">
-        <h2 class="text-xl font-semibold text-gray-800">Call Records & History</h2>
-        <a [href]="historyUrl" class="text-sm font-medium text-emerald-400 hover:text-emerald-800">All</a>
+  <div class="flex justify-between items-center mb-4 border-b pb-2 flex-shrink-0">
+    <h2 class="text-xl font-semibold text-gray-800">Call Records & History</h2>
+    <a [href]="historyUrl" class="text-sm font-medium text-emerald-400 hover:text-emerald-800"
+      >All</a
+    >
+  </div>
+
+  <!-- Filters/Form Group -->
+  <div class="mb-4 space-y-2 text-sm flex-shrink-0">
+    <p class="text-xs text-gray-500 italic">Automatically deleted within 60 days</p>
+
+    <!-- Date Filter -->
+    <div class="flex items-center space-x-2 w-full">
+      <label class="text-gray-700 min-w-1/4">Date Filter</label>
+      <div
+        class="flex flex-row items-center border border-gray-300 rounded p-1 w-full text-xs"
+        (click)="onDisplayInputClick('historyStartDatePicker', 'historyStartDate')"
+      >
+        <input
+          #startDate
+          id="historyStartDate"
+          class="w-full bg-white outline-none"
+          type="text"
+          placeholder="dd/mm/yyyy"
+          [(ngModel)]="startDateValue"
+          name="historyStartDate"
+          readonly
+        />
+        <svg
+          class="hidden xl:flex"
+          fill="#000000"
+          width="20px"
+          height="20px"
+          viewBox="0 0 24 24"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <path
+            d="M3,22H21a1,1,0,0,0,1-1V6a1,1,0,0,0-1-1H17V3a1,1,0,0,0-2,0V5H9V3A1,1,0,0,0,7,3V5H3A1,1,0,0,0,2,6V21A1,1,0,0,0,3,22ZM4,7H20v3H4Zm0,5H20v8H4Z"
+          />
+        </svg>
+      </div>
+      <input
+        id="historyStartDatePicker"
+        type="date"
+        [(ngModel)]="startHiddenDateValue"
+        (change)="onDateInputChange(true)"
+        style="position: absolute; left: -9999px; width: 1px; height: 1px"
+      />
+
+      <span class="text-gray-500 text-xs">to</span>
+
+      <div
+        class="flex flex-row items-center border border-gray-300 rounded p-1 w-full text-xs"
+        (click)="onDisplayInputClick('historyEndDatePicker', 'historyEndDate')"
+      >
+        <input
+          #endDate
+          id="historyEndDate"
+          class="w-full bg-white outline-none"
+          type="text"
+          placeholder="dd/mm/yyyy"
+          [(ngModel)]="endDateValue"
+          name="historyEndDate"
+          readonly
+        />
+        <svg
+          class="hidden xl:flex"
+          fill="#000000"
+          width="20px"
+          height="20px"
+          viewBox="0 0 24 24"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <path
+            d="M3,22H21a1,1,0,0,0,1-1V6a1,1,0,0,0-1-1H17V3a1,1,0,0,0-2,0V5H9V3A1,1,0,0,0,7,3V5H3A1,1,0,0,0,2,6V21A1,1,0,0,0,3,22ZM4,7H20v3H4Zm0,5H20v8H4Z"
+          />
+        </svg>
+      </div>
+      <input
+        id="historyEndDatePicker"
+        type="date"
+        [(ngModel)]="endHiddenDateValue"
+        (change)="onDateInputChange(false)"
+        style="position: absolute; left: -9999px; width: 1px; height: 1px"
+      />
     </div>
 
-    <!-- Filters/Form Group -->
-    <div class="mb-4 space-y-2 text-sm flex-shrink-0">
-        <p class="text-xs text-gray-500 italic">Automatically deleted within 60 days</p>
-        <div class="flex items-center space-x-2">
-            <label class="text-gray-700 min-w-1/4">Date Filter</label>
-            <!-- <input type="date" #startDate class="border border-gray-300 rounded p-1 w-full text-xs"> -->
-
-            <div class="flex flex-row items-center border border-gray-300 rounded p-1 w-full text-xs" 
-            (click)="onDisplayInputClick('historyStartDatePicker', 'historyStartDate')">
-                <input
-                    #startDate
-                    id="historyStartDate"
-                    class="w-full bg-white outline-none"
-                    type="text"
-                    placeholder="dd/mm/yyyy"
-                    [(ngModel)]="startDateValue"
-                    name="historyStartDate"
-                    readonly
-                />
-                <svg class="hidden xl:flex" fill="#000000" width="20px" height="20px" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M3,22H21a1,1,0,0,0,1-1V6a1,1,0,0,0-1-1H17V3a1,1,0,0,0-2,0V5H9V3A1,1,0,0,0,7,3V5H3A1,1,0,0,0,2,6V21A1,1,0,0,0,3,22ZM4,7H20v3H4Zm0,5H20v8H4Z"/></svg>
-            </div>
-            <input
-                id="historyStartDatePicker"
-                type="date"
-                [(ngModel)]="startHiddenDateValue"
-                (change)="onDateInputChange(true)"
-                style="position: absolute; left: -9999px; width: 1px; height: 1px"
-            />
-            
-
-            <span class="text-gray-500 text-xs">to</span>
-            <div class="flex flex-row items-center border border-gray-300 rounded p-1 w-full text-xs"
-            (click)="onDisplayInputClick('historyEndDatePicker', 'historyEndDate')">
-                <input
-                    #endDate
-                    id="historyEndDate"
-                    class="w-full bg-white outline-none"
-                    type="text"
-                    placeholder="dd/mm/yyyy"
-                    [(ngModel)]="endDateValue"
-                    name="historyEndDate"
-                    readonly
-                />
-                <svg class="hidden xl:flex" fill="#000000" width="20px" height="20px" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M3,22H21a1,1,0,0,0,1-1V6a1,1,0,0,0-1-1H17V3a1,1,0,0,0-2,0V5H9V3A1,1,0,0,0,7,3V5H3A1,1,0,0,0,2,6V21A1,1,0,0,0,3,22ZM4,7H20v3H4Zm0,5H20v8H4Z"/></svg>
-            </div>
-            <input
-                id="historyEndDatePicker"
-                type="date"
-                [(ngModel)]="endHiddenDateValue"
-                (change)="onDateInputChange(false)"
-                style="position: absolute; left: -9999px; width: 1px; height: 1px"
-            />
-            <!-- <input type="date" #endDate class="border border-gray-300 rounded p-1 w-full text-xs"> -->
+    <!-- By Project -->
+    <div class="flex items-center space-x-2">
+      <label class="text-gray-700 min-w-1/4">By Project</label>
+      <div class="w-full relative">
+        <div
+          class="w-full flex flex-row rounded py-1 px-2 text-xs space-x-3 border border-gray-300 rounded relative"
+        >
+          <div
+            *ngIf="selectedProject"
+            class="p-2 flex flex-row mr-3 border-1"
+            style="border-radius: 5px; height: 30px"
+          >
+            <svg
+              width="20px"
+              height="20px"
+              viewBox="0 0 24 24"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+              (click)="selectProject(selectedProject)"
+              style="margin-top: -5px; cursor: pointer"
+            >
+              <path
+                d="M10.0303 8.96965C9.73741 8.67676 9.26253 8.67676 8.96964 8.96965C8.67675 9.26255 8.67675 9.73742 8.96964 10.0303L10.9393 12L8.96966 13.9697C8.67677 14.2625 8.67677 14.7374 8.96966 15.0303C9.26255 15.3232 9.73743 15.3232 10.0303 15.0303L12 13.0607L13.9696 15.0303C14.2625 15.3232 14.7374 15.3232 15.0303 15.0303C15.3232 14.7374 15.3232 14.2625 15.0303 13.9696L13.0606 12L15.0303 10.0303C15.3232 9.73744 15.3232 9.26257 15.0303 8.96968C14.7374 8.67678 14.2625 8.67678 13.9696 8.96968L12 10.9393L10.0303 8.96965Z"
+                fill="#1C274C"
+              />
+              <path
+                fill-rule="evenodd"
+                clip-rule="evenodd"
+                d="M12 1.25C6.06294 1.25 1.25 6.06294 1.25 12C1.25 17.9371 6.06294 22.75 12 22.75C17.9371 22.75 22.75 17.9371 22.75 12C22.75 6.06294 17.9371 1.25 12 1.25ZM2.75 12C2.75 6.89137 6.89137 2.75 12 2.75C17.1086 2.75 21.25 6.89137 21.25 12C21.25 17.1086 17.1086 21.25 12 21.25C6.89137 21.25 2.75 17.1086 2.75 12Z"
+                fill="#1C274C"
+              />
+            </svg>
+            <span
+              class="text-gray-500 ms-2 overflow-y-scroll"
+              style="outline: none; width: 100%; margin-top: -2px"
+            >
+              {{ selectedProject.name }}
+            </span>
+          </div>
+          <input
+            #searchInput
+            class="p-1 w-full text-xs"
+            placeholder="Search project.."
+            (keyup)="searchProject($event)"
+            style="outline: none"
+            (focus)="searchProjectFocus(true)"
+          />
         </div>
-        <div class="flex items-center space-x-2">
-            <label class="text-gray-700 min-w-1/4">Attended by Filter</label>
-            <select #attendantFilter class="border border-gray-300 rounded p-1 w-full text-xs">
-                <option value="">Select attendant</option>
-                @for (i of attendeeSelection; track i.id) {
-                    <option value="{{ i.id }}" selected>{{ i.name }}</option>
-                }
-            </select>
-            <button 
-            (click)="applyFilters(attendantFilter.value)"
-            class="px-3 py-1 text-sm font-medium text-white bg-emerald-400 rounded hover:bg-emerald-700 transition">Apply</button>
-            <button 
-            (click)="resetFilters(attendantFilter)"
-            class="px-3 py-1 text-sm font-medium text-gray-700 border border-gray-300 rounded hover:bg-gray-100 transition">Reset</button>
+        <div
+          #selectionInput
+          *ngIf="is_project_search_focus"
+          class="w-full absolute text-gray-700 text-xs z-10 mt-1 max-h-48 overflow-y-auto bg-white border border-gray-300 rounded shadow-lg"
+        >
+          @for (project of FilteredProjects; track project.id) {
+          <div
+            class="w-full p-2 rounded-sm hover:bg-gray-200 cursor-pointer"
+            style="background-color: #f0f0f0"
+            (click)="selectProject(project)"
+          >
+            <input
+              [checked]="getProjectCheckValue(project.id)"
+              type="checkbox"
+              style="accent-color: black"
+              (keydown)="projectCheckboxKeyed($event, project)"
+            />
+            <label class="ms-2 cursor-pointer">{{ project.name }}</label>
+          </div>
+          } @empty {
+          <div class="w-full p-2 rounded-sm" style="background-color: #e6e6e6; font-style: italic">
+            No project found
+          </div>
+          }
         </div>
+      </div>
     </div>
 
-    <!-- Content Area with Proper Overflow Handling -->
-    <div class="flex-1 min-h-0">
-        <!-- Loading Skeleton -->
-        @if (loading) {
-            <div class="space-y-3 pt-2 h-full overflow-y-auto">
-                <div class="flex justify-between items-center text-sm border-t pt-2 pr-3">
-                    <div class="flex-1">
-                        <div class="h-4 bg-gray-300 rounded mb-2 w-3/4 animate-pulse"></div>
-                        <div class="h-3 bg-gray-200 rounded w-1/2 animate-pulse"></div>
-                    </div>
-                    <div class="h-4 bg-gray-300 rounded w-20 animate-pulse"></div>
-                </div>
-                
-                <div class="flex justify-between items-center text-sm border-t pt-2 pr-3">
-                    <div class="flex-1">
-                        <div class="h-4 bg-gray-300 rounded mb-2 w-2/3 animate-pulse"></div>
-                        <div class="h-3 bg-gray-200 rounded w-1/3 animate-pulse"></div>
-                    </div>
-                    <div class="h-4 bg-gray-300 rounded w-20 animate-pulse"></div>
-                </div>
-                
-                <div class="flex justify-between items-center text-sm border-t pt-2 pr-3">
-                    <div class="flex-1">
-                        <div class="h-4 bg-gray-300 rounded mb-2 w-4/5 animate-pulse"></div>
-                        <div class="h-3 bg-gray-200 rounded w-2/5 animate-pulse"></div>
-                    </div>
-                    <div class="h-4 bg-gray-300 rounded w-20 animate-pulse"></div>
-                </div>
-            </div>
-        }
-
-        @if (error && !loading) {
-            <div class="text-center py-8 border-t h-full flex items-center justify-center">
-                <div>
-                    <div class="text-red-500 mb-3">
-                        <svg class="w-12 h-12 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z"></path>
-                        </svg>
-                    </div>
-                    <p class="text-gray-600 mb-4">{{ error }}</p>
-                    <button (click)="refreshData()" class="px-4 py-2 text-sm font-medium text-white bg-emerald-400 rounded hover:bg-emerald-700 transition">
-                        Try Again
-                    </button>
-                </div>
-            </div>
-        }
-
-        <!-- Empty State -->
-        @if (!loading && !error && callHistory.length === 0) {
-            <div class="text-center py-8 border-t h-full flex items-center justify-center">
-                <div>
-                    <div class="text-gray-400 mb-3">
-                        <svg class="w-12 h-12 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
-                        </svg>
-                    </div>
-                    <p class="text-gray-600">No call records found.</p>
-                </div>
-            </div>
-        }
-
-        <!-- Actual Data -->
-        @if (!loading && !error && callHistory.length > 0) {
-            <div class="h-full overflow-y-auto">
-                <div class="space-y-3 pt-2 pb-2">
-                    @for (record of callHistory.slice().reverse(); track record.id) {
-                        <div class="flex justify-between items-center text-sm border-t pt-2 pr-3">
-                            <div>
-                                <p class="font-medium text-gray-900">{{ record.name || 'Unnamed Record' }}</p>
-                                <p class="text-gray-500">{{ record.create_date }}</p>
-                            </div>
-                            <button 
-                                (click)="printRecord(record)" 
-                                [disabled]="isDownloading(record.id)"
-                                class="text-emerald-400 hover:underline disabled:text-gray-400 disabled:cursor-not-allowed">
-                                {{ isDownloading(record.id) ? 'Downloading...' : 'Download' }}
-                            </button>
-                        </div>
-                    }
-                </div>
-            </div>
-        }
+    <!-- By Call Attended -->
+    <div class="flex items-center space-x-2">
+      <label class="text-gray-700 min-w-1/4">By Call Attended</label>
+      <div class="w-full relative">
+        <div
+          class="w-full flex flex-row rounded py-1 px-2 text-xs space-x-3 border border-gray-300 rounded relative"
+        >
+          <div
+            *ngIf="selectedAttendee"
+            class="p-2 flex flex-row mr-3 border-1"
+            style="border-radius: 5px; height: 30px"
+          >
+            <svg
+              width="20px"
+              height="20px"
+              viewBox="0 0 24 24"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+              (click)="selectAttendee(selectedAttendee)"
+              style="margin-top: -5px; cursor: pointer"
+            >
+              <path
+                d="M10.0303 8.96965C9.73741 8.67676 9.26253 8.67676 8.96964 8.96965C8.67675 9.26255 8.67675 9.73742 8.96964 10.0303L10.9393 12L8.96966 13.9697C8.67677 14.2625 8.67677 14.7374 8.96966 15.0303C9.26255 15.3232 9.73743 15.3232 10.0303 15.0303L12 13.0607L13.9696 15.0303C14.2625 15.3232 14.7374 15.3232 15.0303 15.0303C15.3232 14.7374 15.3232 14.2625 15.0303 13.9696L13.0606 12L15.0303 10.0303C15.3232 9.73744 15.3232 9.26257 15.0303 8.96968C14.7374 8.67678 14.2625 8.67678 13.9696 8.96968L12 10.9393L10.0303 8.96965Z"
+                fill="#1C274C"
+              />
+              <path
+                fill-rule="evenodd"
+                clip-rule="evenodd"
+                d="M12 1.25C6.06294 1.25 1.25 6.06294 1.25 12C1.25 17.9371 6.06294 22.75 12 22.75C17.9371 22.75 22.75 17.9371 22.75 12C22.75 6.06294 17.9371 1.25 12 1.25ZM2.75 12C2.75 6.89137 6.89137 2.75 12 2.75C17.1086 2.75 21.25 6.89137 21.25 12C21.25 17.1086 17.1086 21.25 12 21.25C6.89137 21.25 2.75 17.1086 2.75 12Z"
+                fill="#1C274C"
+              />
+            </svg>
+            <span
+              class="text-gray-500 ms-2 overflow-y-scroll"
+              style="outline: none; width: 100%; margin-top: -2px"
+            >
+              {{ selectedAttendee.name }}
+            </span>
+          </div>
+          <input
+            #attendeeSearchInput
+            class="p-1 w-full text-xs"
+            placeholder="Search attendee.."
+            (keyup)="searchAttendee($event)"
+            style="outline: none"
+            (focus)="searchAttendeeFocus(true)"
+          />
+        </div>
+        <div
+          #attendeeSelectionInput
+          *ngIf="is_attendee_search_focus"
+          class="w-full absolute text-gray-700 text-xs z-10 mt-1 max-h-48 overflow-y-auto bg-white border border-gray-300 rounded shadow-lg"
+        >
+          @for (attendee of FilteredAttendees; track attendee.id) {
+          <div
+            class="w-full p-2 rounded-sm hover:bg-gray-200 cursor-pointer"
+            style="background-color: #f0f0f0"
+            (click)="selectAttendee(attendee)"
+          >
+            <input
+              [checked]="getAttendeeCheckValue(attendee.id)"
+              type="checkbox"
+              style="accent-color: black"
+              (keydown)="attendeeCheckboxKeyed($event, attendee)"
+            />
+            <label class="ms-2 cursor-pointer">{{ attendee.name }}</label>
+          </div>
+          } @empty {
+          <div class="w-full p-2 rounded-sm" style="background-color: #e6e6e6; font-style: italic">
+            No attendee found
+          </div>
+          }
+        </div>
+      </div>
     </div>
+
+    <!-- Apply and Reset Buttons -->
+    <div class="flex items-center space-x-2 justify-end">
+      <button
+        (click)="applyFilters()"
+        class="px-3 py-1 text-sm font-medium text-white bg-emerald-400 rounded hover:bg-emerald-700 transition"
+      >
+        Apply
+      </button>
+      <button
+        (click)="resetFilters()"
+        class="px-3 py-1 text-sm font-medium text-gray-700 border border-gray-300 rounded hover:bg-gray-100 transition"
+      >
+        Reset
+      </button>
+    </div>
+  </div>
+
+  <!-- Content Area with Proper Overflow Handling -->
+  <div class="flex-1 min-h-0">
+    <!-- Loading Skeleton -->
+    @if (loading) {
+    <div class="space-y-3 pt-2 h-full overflow-y-auto">
+      <div class="flex justify-between items-center text-sm border-t pt-2 pr-3">
+        <div class="flex-1">
+          <div class="h-4 bg-gray-300 rounded mb-2 w-4/5 animate-pulse"></div>
+          <div class="h-3 bg-gray-200 rounded w-2/5 animate-pulse"></div>
+        </div>
+        <div class="h-4 bg-gray-300 rounded w-20 animate-pulse"></div>
+      </div>
+    </div>
+    } @if (error && !loading) {
+    <div class="text-center py-8 border-t h-full flex items-center justify-center">
+      <div>
+        <div class="text-red-500 mb-3">
+          <svg class="w-12 h-12 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z"
+            ></path>
+          </svg>
+        </div>
+        <p class="text-gray-600 mb-4">{{ error }}</p>
+        <button
+          (click)="refreshData()"
+          class="px-4 py-2 text-sm font-medium text-white bg-emerald-400 rounded hover:bg-emerald-700 transition"
+        >
+          Try Again
+        </button>
+      </div>
+    </div>
+    }
+
+    <!-- Empty State -->
+    @if (!loading && !error && callHistory.length === 0) {
+    <div class="text-center py-8 border-t h-full flex items-center justify-center">
+      <div>
+        <div class="text-gray-400 mb-3">
+          <svg class="w-12 h-12 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+            ></path>
+          </svg>
+        </div>
+        <p class="text-gray-600">No call records found.</p>
+      </div>
+    </div>
+    }
+
+    <!-- Actual Data -->
+    @if (!loading && !error && callHistory.length > 0) {
+    <div class="h-full overflow-y-auto">
+      <div class="space-y-3 pt-2 pb-2">
+        @for (record of callHistory.slice().reverse(); track record.id) {
+        <div class="flex justify-between items-center text-sm border-t pt-2 pr-3">
+          <div>
+            <p class="font-medium text-gray-900">{{ record.name || 'Unnamed Record' }}</p>
+            <p class="text-gray-500">{{ record.create_date }}</p>
+          </div>
+          <button
+            (click)="printRecord(record)"
+            [disabled]="isDownloading(record.id)"
+            class="text-emerald-400 hover:underline disabled:text-gray-400 disabled:cursor-not-allowed"
+          >
+            {{ isDownloading(record.id) ? 'Downloading...' : 'Download' }}
+          </button>
+        </div>
+        }
+      </div>
+    </div>
+    }
+  </div>
 </div>

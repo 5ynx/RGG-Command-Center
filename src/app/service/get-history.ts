@@ -35,6 +35,7 @@ export class GetHistory {
       fromObject: {
         start_date: filters.start_date || '',
         end_date: filters.end_date || '',
+        project_id: filters.project_id || '',
         attended_by: filters.attended_by || ''
       }
     })
