@@ -466,6 +466,16 @@ export class CallService implements OnDestroy {
     await this.showIncomingCallModal(offer.offerObj);
   }
 
+  async openNewVMS(project_id: any = '') {
+    let rgg_data = localStorage.getItem('rgg_dashboard_auth')
+    if (rgg_data) {
+      let rgg_auth: any = JSON.parse(rgg_data)
+      console.log(rgg_auth)
+      let newWindow = `${environment.vmsUrl}?project_id=${project_id}&user_id=${rgg_auth.user[0].user_id}&call_id=${this.callRecordHistoryId}`
+      window.open(newWindow,)
+    }
+  }
+
   async handleAnswer(answer: any) {
     // await this.stopOutgoingRingtone();
     // await this.stopRingtone();
@@ -1184,7 +1194,7 @@ export class CallService implements OnDestroy {
     this.socket.emit('intercom-close-gate', { intercom_id: intercom_id });
   }
 
-  createCallRecordHistory(callRecord: any){{
+  async createCallRecordHistory(callRecord: any){{
     const apiUrl = `${environment.apiUrl}/rgg/create-records`;
     const body = {
       intercom_id: callRecord.intercom_id,
@@ -1197,6 +1207,7 @@ export class CallService implements OnDestroy {
         console.log('Create call record history:', response);
         this.refreshCallLog();
         this.callRecordHistoryId = response.data;
+        this.openNewVMS(response.project_id)
         console.log(this.callRecordHistoryId);
       },
       error: (err) => console.error('Error creating call record history:', err),
