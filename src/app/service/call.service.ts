@@ -472,7 +472,7 @@ export class CallService implements OnDestroy {
       let rgg_auth: any = JSON.parse(rgg_data)
       console.log(rgg_auth)
       let newWindow = `${environment.vmsUrl}?project_id=${project_id}&user_id=${rgg_auth.user[0].user_id}&call_id=${this.callRecordHistoryId}`
-      window.open(newWindow,)
+      window.open(newWindow,'myWindow','width=800,height=900,left=100,top=100')
     }
   }
 
