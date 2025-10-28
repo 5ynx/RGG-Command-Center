@@ -297,65 +297,6 @@ export class CallService implements OnDestroy {
     }
   }
 
-  async createOffer(receiverPhone: any = false, receiverId: any = false, unit_id: any = false, isResident: any = false) {
-    if (!receiverId && !receiverPhone && !unit_id) {
-      return;
-    }
-
-    await this.startLocalStream();
-
-    this.peerConnection = new RTCPeerConnection({ iceServers: this.iceServers, iceTransportPolicy: 'all' });
-
-    this.localStream.getTracks().forEach(track => {
-      this.peerConnection.addTrack(track, this.localStream);
-    });
-
-    this.peerConnection.onicecandidate = (event) => {
-      if (event.candidate) {
-        this.socket.emit('ice-candidate', event.candidate);
-        this.callerpendingCandidates.push(event.candidate);
-      }
-    };
-
-    this.peerConnection.ontrack = (event) => {
-      this.remoteStream = event.streams[0];
-      const remoteVideo: HTMLVideoElement = document.getElementById('remote-video') as HTMLVideoElement;
-      remoteVideo.srcObject = this.remoteStream;
-    };
-
-    this.peerConnection.oniceconnectionstatechange = () => {
-      const state = this.peerConnection.iceConnectionState;
-
-      switch (state) {
-        case "checking":
-          this.updateAudioStatus("Connecting audio...");
-          break;
-        case "connected":
-        case "completed":
-          this.updateAudioStatus("Audio connected");
-          break;
-      }
-    };
-
-    const offer = await this.peerConnection.createOffer();
-    await this.peerConnection.setLocalDescription(offer);
-
-    this.callerName = this.userName;
-    this.callerId = this.userId;
-    console.log(receiverId)
-    this.socket.emit('offer', {
-      offerObj: offer,
-      receiverPhone: receiverPhone,
-      receiverId: receiverId,
-      callerName: this.callerName,
-      callerId: this.callerId,
-      unitId: unit_id,
-      isResident: isResident
-    });
-
-    return 'done'
-  }
-
   async createOfferRecord(receiverPhone: any = false, receiverId: any = false, unit_id: any = false, isResident: any = false, callRecord: any) {
     if (!receiverId && !receiverPhone && !unit_id) {
       return;
@@ -514,6 +455,7 @@ export class CallService implements OnDestroy {
           break;
       }
     };
+    this.startRecordingWithWebAudio(this.localStream, this.remoteStream)
   }
 
   async handleICECandidate(candidate: RTCIceCandidate): Promise<void> {
