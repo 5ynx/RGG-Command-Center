@@ -48,6 +48,23 @@ export class VideoCalls {
     }
   }
 
+  private async triggerBlinkingAnimation(): Promise<void> {
+    return new Promise((resolve) => {
+      const videoElement = this.remoteVideoElement?.nativeElement || 
+                          document.getElementById('remote-video') as HTMLVideoElement;
+      
+      if (!videoElement) {
+        resolve();
+        return;
+      }
+      videoElement.classList.add('blinking-snapshot');
+      setTimeout(() => {
+        videoElement.classList.remove('blinking-snapshot');
+        resolve();
+      }, 600);
+    });
+  }
+
   private captureVideoScreenshot(): Promise<string | null> {
     return new Promise((resolve) => {
       const videoElement = this.remoteVideoElement?.nativeElement || 
@@ -65,6 +82,8 @@ export class VideoCalls {
         resolve(null);
         return;
       }
+      
+      this.triggerBlinkingAnimation();
 
       // Create canvas element
       const canvas = document.createElement('canvas');

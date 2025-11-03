@@ -1,0 +1,23 @@
+/* White flash animation for snapshot */
+#remote-video {
+  transition: all 0.3s ease;
+  
+  &.blinking-snapshot {
+    animation: whiteFlash 0.4s ease;
+  }
+}
+
+@keyframes whiteFlash {
+  0% {
+    filter: brightness(1);
+  }
+  25% {
+    filter: brightness(3);
+  }
+  50% {
+    filter: brightness(1);
+  }
+  100% {
+    filter: brightness(1);
+  }
+}
