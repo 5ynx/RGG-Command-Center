@@ -61,6 +61,10 @@ export class HistoryCalls implements OnInit, OnDestroy {
     
     // Register click outside listener
     document.addEventListener('click', this.handleClickOutside);
+
+    this.callService.refreshHistoryTrigger$.subscribe(() => {
+      this.refreshData();
+    });
   }
 
   ngOnDestroy(): void {

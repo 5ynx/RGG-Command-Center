@@ -6,6 +6,7 @@ import { ActivatedRoute } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
 import { UrlApiService } from './url-api/url-api.service';
 import { Test } from './test';
+import { Subject } from 'rxjs';
 
 export interface AuthResponse {
   code: number;
@@ -50,7 +51,9 @@ export class CallService implements OnDestroy {
   private callRecordHistoryId = 0;
   private temporaryOffer: any;
   private audioRecords: any;
-
+  private callStartTime: number = 0;
+  private timeInterval: any;
+  
   audioStatus = new BehaviorSubject<string>('');
   callActionStatusSubject = new BehaviorSubject<string>('');
   callActionStatus$ = this.callActionStatusSubject.asObservable();
@@ -60,6 +63,10 @@ export class CallService implements OnDestroy {
   missedCallList$ = this.missedCallListSubject.asObservable();
   private ongoingCallRecordSubject = new BehaviorSubject<any>(null);
   ongoingCallRecord$ = this.ongoingCallRecordSubject.asObservable()
+  private refreshHistoryTrigger = new Subject<void>();
+  refreshHistoryTrigger$ = this.refreshHistoryTrigger.asObservable();
+  private callDurationSubject = new BehaviorSubject<string>('00:00');
+  callDuration$ = this.callDurationSubject.asObservable();
 
   constructor(
     private route: ActivatedRoute,
@@ -160,8 +167,31 @@ export class CallService implements OnDestroy {
     // return this.presentSingletonModal(SplashCallPage);
   }
 
+  private startCallTimer() {
+    this.callStartTime = Date.now();
+    this.stopCallTimer();
+
+    this.timeInterval = setInterval(() => {
+      const elapsed = Date.now() - this.callStartTime;
+      const minutes = Math.floor(elapsed / 60000);
+      const seconds = Math.floor((elapsed % 60000) / 1000);
+      const formattedTime = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+      this.callDurationSubject.next(formattedTime);
+    }, 1000);
+  }
+
+  private stopCallTimer() {
+    if (this.timeInterval) {
+      clearInterval(this.timeInterval);
+      this.timeInterval = null;
+    }
+    this.callDurationSubject.next('00:00');
+  }
+
   private async resetCallData() {
     try {
+      this.stopCallTimer();
+
       if (this.localStream) {
         this.localStream.getTracks().forEach(track => track.stop());
         this.localStream = null!;
@@ -191,6 +221,7 @@ export class CallService implements OnDestroy {
       this.remoteDescriptionSet = false;
       this.callActionStatusSubject.next('');
       this.ongoingCallRecordSubject.next(null);
+      this.callStartTime = 0;
 
       localStorage.removeItem('callData');
     } catch (error) {
@@ -456,6 +487,7 @@ export class CallService implements OnDestroy {
       }
     };
     this.startRecordingWithWebAudio(this.localStream, this.remoteStream)
+    this.startCallTimer();
   }
 
   async handleICECandidate(candidate: RTCIceCandidate): Promise<void> {
@@ -681,6 +713,7 @@ export class CallService implements OnDestroy {
       callerSocketId: this.callerSocketId,
       receiverSocketId: this.receiverSocketId
     });
+    this.startCallTimer();
   }
 
   async handleOngoingCallModal() {
@@ -1076,6 +1109,7 @@ export class CallService implements OnDestroy {
   refreshCallLog(){
     this.refreshIncomingCall();
     this.refreshMissedCall();
+    this.refreshHistoryTrigger.next();
   }
 
   refreshIncomingCall() {

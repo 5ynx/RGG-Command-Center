@@ -12,6 +12,8 @@ import { CallService } from '../../service/call.service';
 export class VideoCalls {
   @ViewChild('remoteVideo', { static: false }) remoteVideoElement!: ElementRef<HTMLVideoElement>;
   
+  callDuration: string = '00:00';
+
   constructor(
     private callService: CallService, 
     private zone: NgZone,
@@ -33,6 +35,13 @@ export class VideoCalls {
         this.cdr.markForCheck();
       });
     });
+
+    this.callService.callDuration$.subscribe(duration => {
+      this.zone.run(() => {
+        this.callDuration = duration;
+        this.cdr.markForCheck();
+      })
+    })
   }
 
   async takeSnapshot() {
