@@ -52,7 +52,7 @@ export class Dashboard implements OnInit {
       if (!userId || !token) {
         this.authError = 'Missing authentication parameters';
         this.isLoading = false;
-        this.showUnauthorized = false;
+        this.showUnauthorized = true;
         this.cdr.detectChanges();
         this.cdr.markForCheck();
         return;
