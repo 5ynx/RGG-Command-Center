@@ -13,6 +13,7 @@ export class VideoCalls {
   @ViewChild('remoteVideo', { static: false }) remoteVideoElement!: ElementRef<HTMLVideoElement>;
   
   callDuration: string = '00:00';
+  
 
   constructor(
     private callService: CallService, 
@@ -122,6 +123,10 @@ export class VideoCalls {
         resolve(null);
       }
     });
+  }
+
+  getResidentProfilePic(){
+    return this.callService.getResidentProfilePic(this.ongoingCallRecord);
   }
 
   endCall() {

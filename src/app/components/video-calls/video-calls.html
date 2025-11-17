@@ -13,15 +13,25 @@
             <video id="local-video" class="hidden"></video>
             
             <!-- Remote Video -->
-            <div class="flex-1 flex items-center justify-center min-h-0" [ngClass]="{'hidden': callStatus == 'calling'}">
+            <div class="flex-1 flex items-center justify-center min-h-0" [ngClass]="{'hidden': callStatus == 'calling' || ongoingCallRecord?.family_id}">
                 <video id="remote-video" class="rounded-lg bg-black w-full h-full max-h-full object-cover"></video>
             </div>
             
             <!-- Calling State -->
             <div *ngIf="callStatus == 'calling'" class="flex-1 flex items-center justify-center min-h-0">
                 <div class="rounded-lg bg-black w-full h-full max-h-full flex flex-col items-center justify-center text-white text-xl font-semibold space-y-2">
+                    <img *ngIf="ongoingCallRecord?.family_id" [src]="getResidentProfilePic()" class="max-h-40 max-w-1/2">
                     <span>{{ ongoingCallRecord?.caller_name }}</span>
                     <span class="animate-pulse text-lg">Calling...</span>
+                </div>
+            </div>
+
+            <!-- End User -->
+            <div *ngIf="ongoingCallRecord?.family_id && callStatus != 'calling'" class="flex-1 flex items-center justify-center min-h-0">
+                <div class="rounded-lg bg-black w-full h-full max-h-full flex flex-col items-center justify-center text-white text-xl font-semibold space-y-2">
+                    <img [src]="getResidentProfilePic()" class="max-h-40 max-w-1/2">
+                    <span>{{ ongoingCallRecord?.caller_name }}</span>
+                    <span class="text-lg">{{ callDuration }}</span>
                 </div>
             </div>
         </div>

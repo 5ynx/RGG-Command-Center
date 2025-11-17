@@ -90,7 +90,7 @@ export class CallService implements OnDestroy {
       this.userId = currentUser.user_id;
       this.userName = `Command Center - ${currentUser.user_id}`;
     
-      this.socket = io('http://192.168.1.109:8091', {
+      this.socket = io('http://192.168.1.78:8091', {
         query: { uniqueId: currentUser.user_id ? `RGG-${currentUser.user_id}` : 'Public-user' },
       });
       this.refreshCallLog();
@@ -239,7 +239,7 @@ export class CallService implements OnDestroy {
 
       // 2. iOS-specific constraints - lebih konservatif
       const constraints = {
-        video: true,
+        video: false,
         audio: {
           echoCancellation: true,
           noiseSuppression: true,
@@ -1189,7 +1189,9 @@ export class CallService implements OnDestroy {
       error: (err) => console.error('Error creating call record history:', err),
     });
 
-  }
+  }}
 
+  getResidentProfilePic(callRecord: any){
+    return `${environment.apiUrl}/web/image/fs.residential.family/${callRecord.family_id}/image_profile`
   }
 }

@@ -23,6 +23,9 @@ export class MissedCalls {
     if(callRecord.intercom_id){
       // console.log("hello -->", callRecord.intercom_id);
       this.callService.createOfferRecord(false, `Intercom-${callRecord.intercom_id}`, false, true, callRecord);
+    }else if(callRecord.family_id){
+      // console.log("hello -->", callRecord.intercom_id);
+      this.callService.createOfferRecord(false, callRecord.family_id, false, false, callRecord);
     }
   }
 }
