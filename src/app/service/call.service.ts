@@ -229,7 +229,7 @@ export class CallService implements OnDestroy {
     }
   }
 
-  async startLocalStream(): Promise<boolean> {
+  async startLocalStream(activate_video: boolean = false): Promise<boolean> {
     try {
       // 1. Cek apakah MediaDevices API tersedia
       if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
@@ -239,7 +239,7 @@ export class CallService implements OnDestroy {
 
       // 2. iOS-specific constraints - lebih konservatif
       const constraints = {
-        video: false,
+        video: activate_video,
         audio: {
           echoCancellation: true,
           noiseSuppression: true,
@@ -335,7 +335,8 @@ export class CallService implements OnDestroy {
     this.ongoingCallRecordSubject.next(callRecord);
     this.callActionStatusSubject.next('calling');
 
-    await this.startLocalStream();
+    let activate_video = String(receiverId).includes('Intercom-') ? true : false ;
+    await this.startLocalStream(activate_video);
 
     this.peerConnection = new RTCPeerConnection({ iceServers: this.iceServers, iceTransportPolicy: 'all' });
 
