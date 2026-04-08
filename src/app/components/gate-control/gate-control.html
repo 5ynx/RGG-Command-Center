@@ -37,7 +37,21 @@
     @if (Projects.length > 0 && !isLoading) {
         <div class="flex-1 min-h-0 border-t pt-2 mt-2">
             <div class="flex flex-col space-y-2 h-full overflow-y-auto" *ngIf="selectedProject">
-                @for (gate of Gates; track gate.id) {
+                <div class="flex items-center space-x-2 w-full">
+                    <button
+                        (click)="changeButton(true)"
+                        [class]="'px-3 py-1 text-sm font-medium rounded transition w-1/2 ' + (isGate ? 'text-white bg-emerald-400 hover:bg-emerald-700' : 'text-gray-700 border border-gray-300 hover:bg-gray-100')"
+                    >
+                        LPR
+                    </button>
+                    <button
+                        (click)="changeButton(false)"
+                        [class]="'px-3 py-1 text-sm font-medium rounded transition w-1/2 ' + (isIntercom ? 'text-white bg-emerald-400 hover:bg-emerald-700' : 'text-gray-700 border border-gray-300 hover:bg-gray-100')"
+                    >
+                        Intercom
+                    </button>
+                </div>
+                @for (gate of ShowGates; track gate.id) {
                     <div class="flex justify-between items-center text-sm">
                         <div class="flex items-center">
                             <p class="font-medium text-gray-900">{{ gate?.name || "Gate" }}</p>

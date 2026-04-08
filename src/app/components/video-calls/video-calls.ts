@@ -136,4 +136,8 @@ export class VideoCalls {
       this.callService.endCallRecord(this.ongoingCallRecord);
     }
   }
+
+  openBarrier() {
+    this.callService.openGate(`Intercom-${this.ongoingCallRecord.intercom_id}`)
+  }
 }

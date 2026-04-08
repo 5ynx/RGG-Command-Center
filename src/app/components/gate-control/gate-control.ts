@@ -27,6 +27,11 @@ export class GateControl {
   }
 
   Gates: any = []
+  Intercom: any = []
+  ShowGates: any = []
+
+  isGate = false
+  isIntercom = false
   
   isLoading = false
   errMessage = ''
@@ -38,10 +43,12 @@ export class GateControl {
       next: (response) => {
         this.isLoading = false;
         if (response.code === 200) {
-          this.Gates = response.result;
+          this.Gates = response.result.gates;
+          this.Intercom = response.result.intercom
         } else {
           this.errMessage = response.message || 'Failed to load gates';
         }
+        this.changeButton(true)
         this.cdr.detectChanges();
       },
       error: (err) => {
@@ -115,6 +122,7 @@ export class GateControl {
     if (project.id == this.selectedProject.id) {
       this.selectedProject = false
       this.Gates = []
+      this.Intercom = []
     } else {
       this.selectedProject = project
       this.search_project = ''
@@ -143,6 +151,22 @@ export class GateControl {
   checkboxKeyed(event: KeyboardEvent, project: any) {
     if (event.key === 'Enter') {
       this.selectProject(project)
+    }
+  }
+
+  changeButton(is_gate: boolean = true) {
+    if (is_gate) {
+      if (!this.isGate) {
+        this.isIntercom = false
+        this.isGate = true
+        this.ShowGates = this.Gates
+      }
+    } else {
+      if (!this.isIntercom) {
+        this.isIntercom = true
+        this.isGate = false
+        this.ShowGates = this.Intercom
+      }
     }
   }
 }
