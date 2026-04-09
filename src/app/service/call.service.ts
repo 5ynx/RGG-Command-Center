@@ -53,7 +53,8 @@ export class CallService implements OnDestroy {
   private audioRecords: any;
   private callStartTime: number = 0;
   private timeInterval: any;
-  
+  private ringtoneAudio: HTMLAudioElement | null = null;
+
   audioStatus = new BehaviorSubject<string>('');
   callActionStatusSubject = new BehaviorSubject<string>('');
   callActionStatus$ = this.callActionStatusSubject.asObservable();
@@ -90,7 +91,8 @@ export class CallService implements OnDestroy {
       this.userId = currentUser.user_id;
       this.userName = `Command Center - ${currentUser.user_id}`;
     
-      this.socket = io('http://192.168.1.78:8091', {
+      this.socket = io('wss://ws.sgeede.com', {
+      // this.socket = io('http://localhost:8091', {
         query: { uniqueId: currentUser.user_id ? `RGG-${currentUser.user_id}` : 'Public-user' },
       });
       this.refreshCallLog();
@@ -1125,6 +1127,11 @@ export class CallService implements OnDestroy {
           ? response 
           : response.data ?? [];
         this.incomingCallListSubject.next(list);
+        if (list.length > 0 && this.rggState == 'away') {
+          this.startRingtone();
+        } else {
+          this.endRingtone();
+        }
       },
       error: (err) => console.error('Error fetching call list:', err),
     });
@@ -1195,4 +1202,34 @@ export class CallService implements OnDestroy {
   getResidentProfilePic(callRecord: any){
     return `${environment.apiUrl}/web/image/fs.residential.family/${callRecord.family_id}/image_profile`
   }
+
+  public rggState: any = 'standby'
+  changeState(state: any) {
+    this.rggState = state
+    this.refreshIncomingCall()
+    console.log('this.rggStatestandbystandbystandby', this.rggState)
+  }
+
+  audioPath = 'assets/audio/ringtone.mp3'
+  startRingtone() {
+    if (!this.ringtoneAudio) {
+      this.ringtoneAudio = new Audio(this.audioPath); // adjust path
+      console.log(this.ringtoneAudio)
+      console.log(this.ringtoneAudio)
+      this.ringtoneAudio.loop = true; // 🔁 loop forever
+    }
+
+    this.ringtoneAudio.currentTime = 0; // reset to start
+    this.ringtoneAudio.play().catch(err => {
+      console.error('Audio play failed:', err);
+    });
+  }
+
+  endRingtone() {
+    if (this.ringtoneAudio) {
+      this.ringtoneAudio.pause();
+      this.ringtoneAudio.currentTime = 0;
+    }
+  }
+
 }

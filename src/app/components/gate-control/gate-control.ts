@@ -60,20 +60,29 @@ export class GateControl {
   }
 
   openGate(gate: any, is_close: boolean = false) {
-    this.ApiUrl.urlApi('/rgg/open-barrier', {camera_id: gate.id, is_close: is_close}).subscribe({
-      next: (response) => {
-        this.isLoading = false;
-        if (response.code === 200) {
-        } else {
-          this.errMessage = response.message || 'Failed to load gates';
+    if (this.isGate) {
+      this.ApiUrl.urlApi('/rgg/open-barrier', {camera_id: gate.id, is_close: is_close}).subscribe({
+        next: (response) => {
+          this.isLoading = false;
+          if (response.code === 200) {
+          } else {
+            this.errMessage = response.message || 'Failed to load gates';
+          }
+        },
+        error: (err) => {
+          this.isLoading = false;
+          this.errMessage = 'Error fetching data from server';
+          console.error('Error fetching load gates:', err);
         }
-      },
-      error: (err) => {
-        this.isLoading = false;
-        this.errMessage = 'Error fetching data from server';
-        console.error('Error fetching load gates:', err);
+      });
+    } else {
+      console.log('gategategate', gate)
+      if (is_close) {
+        this.callService.closeGate(`Intercom-${gate.id}`)
+      } else {
+        this.callService.openGate(`Intercom-${gate.id}`)
       }
-    });
+    }
   }
 
   Projects: any = []

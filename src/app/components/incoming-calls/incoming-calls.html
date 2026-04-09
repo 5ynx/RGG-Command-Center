@@ -1,6 +1,10 @@
 <div>
-    <div class="flex justify-between items-center pb-2 flex-shrink-0">
+    <div class="flex justify-between items-center mb-4 pb-2 flex-shrink-0">
         <h2 class="text-xl font-semibold text-gray-800">Incoming Call List</h2>
+        <div>
+            <button class="px-3 py-1 text-sm font-medium text-white bg-emerald-400 rounded hover:bg-emerald-700 transition" (click)="changeState('away')" *ngIf="stateType == 'standby'">Standby</button>
+            <button class="px-3 py-1 text-sm font-medium text-white bg-red-600 rounded hover:bg-red-700 transition" (click)="changeState('standby')" *ngIf="stateType == 'away'">Away</button>
+        </div>
     </div>
 
     <div class="space-y-3 flex-grow overflow-y-auto">

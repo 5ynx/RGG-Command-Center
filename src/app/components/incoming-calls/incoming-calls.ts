@@ -13,7 +13,7 @@ export class IncomingCalls {
 
     incomingCallList$!: any;
 
-    constructor(private callService: CallService) {}
+    constructor(public callService: CallService) {}
 
     ngOnInit(): void {
       this.incomingCallList$ = this.callService.incomingCallList$;
@@ -25,6 +25,12 @@ export class IncomingCalls {
 
     rejectCall(callRecord: any){
       this.callService.rejectCallRecord(callRecord);
+    }
+
+    stateType = 'standby'
+    changeState(type: string) {
+      this.callService.changeState(type)
+      this.stateType = type
     }
 
 }
