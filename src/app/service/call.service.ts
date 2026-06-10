@@ -1033,12 +1033,15 @@ export class CallService implements OnDestroy {
     const dest = audioCtx.createMediaStreamDestination();
 
     // Create sources
-    const localSource = audioCtx.createMediaStreamSource(localStream);
-    const remoteSource = audioCtx.createMediaStreamSource(remoteStream);
-
-    // Connect sources to destination
-    localSource.connect(dest);
-    remoteSource.connect(dest);
+    if (localStream && localStream.getAudioTracks().length > 0) {
+      const localSource = audioCtx.createMediaStreamSource(localStream);
+      localSource.connect(dest);
+    }
+    
+    if (remoteStream && remoteStream.getAudioTracks().length > 0) {
+      const remoteSource = audioCtx.createMediaStreamSource(remoteStream);
+      remoteSource.connect(dest);
+    }
 
     // Record from mixed stream
     this.mediaRecorder = new MediaRecorder(dest.stream);
@@ -1069,7 +1072,7 @@ export class CallService implements OnDestroy {
         
         // console.log(payload)
         
-        this.ApiUrl.urlApi('/call/post/recorded_call', payload).subscribe({
+        this.ApiUrl.urlApiPost('/call/post/recorded_call', payload).subscribe({
             next: (res) => console.log(res),
             error: (err) => console.error(err)
           });
@@ -1183,6 +1186,7 @@ export class CallService implements OnDestroy {
     const body = {
       intercom_id: callRecord.intercom_id,
       caller_name: callRecord.caller_name,
+      family_id: callRecord.family_id,
       attended_by: this.userId,
     };
     

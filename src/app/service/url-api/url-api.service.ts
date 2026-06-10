@@ -24,4 +24,12 @@ export class UrlApiService {
     })
     return this.http.get<ApiResponse>(urlCon, { params });
   }
+
+  urlApiPost(url: string, body: any = {}): Observable<ApiResponse> {
+    const urlCon = this.baseUrl + url;
+    console.log('bodybodybodybody', body)
+    return this.http.post<ApiResponse>(urlCon, body, {
+      headers: { 'Content-Type': 'application/json' }
+    });
+  }
 }

@@ -20,6 +20,7 @@ export class MissedCalls {
   }
 
   callBack(callRecord:any){
+    console.log('record', callRecord)
     if(callRecord.intercom_id){
       // console.log("hello -->", callRecord.intercom_id);
       this.callService.createOfferRecord(false, `Intercom-${callRecord.intercom_id}`, false, true, callRecord);
