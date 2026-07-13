@@ -85,6 +85,18 @@ export class GateControl {
     }
   }
 
+  stopRingtone(gate: any) {
+        this.callService.stopRingtone(`Intercom-${gate.id}`)
+  }
+
+  refreshChamera(gate: any) {
+        this.callService.refreshChamera(`Intercom-${gate.id}`)
+  }
+
+  restartIntercom(gate: any) {
+        this.callService.restartIntercom(`Intercom-${gate.id}`)
+  }
+
   Projects: any = []
   FilteredProjects: any = []
   selectedProject: any = false

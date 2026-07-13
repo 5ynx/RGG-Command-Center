@@ -1181,6 +1181,18 @@ export class CallService implements OnDestroy {
     this.socket.emit('intercom-close-gate', { intercom_id: intercom_id });
   }
 
+  stopRingtone(intercom_id: any) {
+    this.socket.emit('intercom-stop-ringtone', { intercom_id: intercom_id });
+  }
+
+  refreshChamera(intercom_id: any) {
+    this.socket.emit('intercom-refresh-camera', { intercom_id: intercom_id });
+  }
+
+  restartIntercom(intercom_id: any) {
+    this.socket.emit('intercom-restart-app', { intercom_id: intercom_id });
+  }
+
   async createCallRecordHistory(callRecord: any){{
     const apiUrl = `${environment.apiUrl}/rgg/create-records`;
     const body = {
