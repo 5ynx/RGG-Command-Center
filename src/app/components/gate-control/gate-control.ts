@@ -61,6 +61,10 @@ export class GateControl {
 
   openGate(gate: any, is_close: boolean = false, freeze: boolean = false) {
     if (this.isGate) {
+      if (freeze && !gate.can_freeze) {
+        this.errMessage = 'Freezing is not allowed for this gate';
+        return;
+      }
       this.ApiUrl.urlApi('/rgg/open-barrier', { camera_id: gate.id, is_close: is_close, freeze: freeze }).subscribe({
         next: (response) => {
           this.isLoading = false;
