@@ -29,6 +29,9 @@ export class GateControl {
   Gates: any = []
   Intercom: any = []
   ShowGates: any = []
+  gateBarrierMode: string = 'gate_only'
+  autoGateScheduleEnabled: boolean = false
+  autoGateStatus: string = 'closed'
 
   isGate = false
   isIntercom = false
@@ -44,7 +47,10 @@ export class GateControl {
         this.isLoading = false;
         if (response.code === 200) {
           this.Gates = response.result.gates;
-          this.Intercom = response.result.intercom
+          this.Intercom = response.result.intercom;
+          this.gateBarrierMode = response.result.gate_barrier_mode || 'gate_only';
+          this.autoGateScheduleEnabled = response.result.auto_gate_schedule_enabled || false;
+          this.autoGateStatus = response.result.auto_gate_status || 'closed';
         } else {
           this.errMessage = response.message || 'Failed to load gates';
         }
