@@ -325,15 +325,52 @@ export class CallService implements OnDestroy {
       return;
     }
     const videoElement: HTMLVideoElement = document.getElementById('local-video') as HTMLVideoElement;
-    if (videoElement) {
+    if (videoElement && this.localStream) {
       videoElement.srcObject = this.localStream;
-      await videoElement.play();
       videoElement.muted = true;
+      videoElement.playsInline = true;
+      try {
+        await videoElement.play();
+      } catch (e) {
+        console.warn('local-video play failed:', e);
+      }
     }
     const remoteVideo: HTMLVideoElement = document.getElementById('remote-video') as HTMLVideoElement;
-    if (remoteVideo) {
+    if (remoteVideo && this.remoteStream) {
       remoteVideo.srcObject = this.remoteStream;
-      await remoteVideo.play();
+      remoteVideo.playsInline = true;
+      remoteVideo.autoplay = true;
+      try {
+        await remoteVideo.play();
+      } catch (e) {
+        console.warn('remote-video play failed:', e);
+      }
+    }
+  }
+
+  /** offer_obj / target_socket_ids may arrive as JSON strings from Odoo Json fields */
+  private parseJsonField<T = any>(value: any): T | any {
+    if (value == null || value === '') {
+      return value;
+    }
+    if (typeof value === 'string') {
+      try {
+        return JSON.parse(value);
+      } catch {
+        return value;
+      }
+    }
+    return value;
+  }
+
+  private attachRemoteStream(stream: MediaStream) {
+    this.remoteStream = stream;
+    const remoteVideo: HTMLVideoElement = document.getElementById('remote-video') as HTMLVideoElement;
+    if (remoteVideo) {
+      remoteVideo.srcObject = stream;
+      remoteVideo.playsInline = true;
+      remoteVideo.autoplay = true;
+      remoteVideo.play().catch((e) => console.warn('remote-video play failed:', e));
     }
   }
 
@@ -362,33 +399,33 @@ export class CallService implements OnDestroy {
       }
     };
 
-    this.peerConnection.ontrack = (event) => {
-      this.remoteStream = event.streams[0];
-      const remoteVideo: HTMLVideoElement = document.getElementById('remote-video') as HTMLVideoElement;
-      remoteVideo.srcObject = this.remoteStream;
-    };
+      this.peerConnection.ontrack = (event) => {
+        const stream = event.streams?.[0] || new MediaStream([event.track]);
+        this.attachRemoteStream(stream);
+      };
 
-    this.peerConnection.oniceconnectionstatechange = () => {
-      const state = this.peerConnection.iceConnectionState;
+      this.peerConnection.oniceconnectionstatechange = () => {
+        const state = this.peerConnection.iceConnectionState;
 
-      switch (state) {
-        case "checking":
-          this.updateAudioStatus("Connecting audio...");
-          break;
-        case "connected":
-        case "completed":
-          this.updateAudioStatus("Audio connected");
-          break;
-      }
-    };
+        switch (state) {
+          case "checking":
+            this.updateAudioStatus("Connecting audio...");
+            break;
+          case "connected":
+          case "completed":
+            this.updateAudioStatus("Audio connected");
+            this.regenerateVideo();
+            break;
+        }
+      };
 
-    const offer = await this.peerConnection.createOffer();
-    await this.peerConnection.setLocalDescription(offer);
+      const offer = await this.peerConnection.createOffer();
+      await this.peerConnection.setLocalDescription(offer);
 
-    this.callerName = this.userName;
-    this.callerId = this.userId;
-    console.log(receiverId)
-    this.socket.emit('offer', {
+      this.callerName = this.userName;
+      this.callerId = this.userId;
+      console.log(receiverId)
+      this.socket.emit('offer', {
       offerObj: offer,
       receiverPhone: receiverPhone,
       receiverId: receiverId,
@@ -418,11 +455,8 @@ export class CallService implements OnDestroy {
       };
 
       this.peerConnection.ontrack = (event) => {
-        this.remoteStream = event.streams[0];
-        const remoteVideo: HTMLVideoElement = document.getElementById('remote-video') as HTMLVideoElement;
-        if (remoteVideo) {
-          remoteVideo.srcObject = this.remoteStream;
-        }
+        const stream = event.streams?.[0] || new MediaStream([event.track]);
+        this.attachRemoteStream(stream);
       };
       this.peerConnection.oniceconnectionstatechange = () => {
         const state = this.peerConnection.iceConnectionState;
@@ -434,6 +468,7 @@ export class CallService implements OnDestroy {
           case "connected":
           case "completed":
             this.updateAudioStatus("Audio connected");
+            this.regenerateVideo();
             break;
         }
       };
@@ -450,13 +485,57 @@ export class CallService implements OnDestroy {
     await this.showIncomingCallModal(offer.offerObj);
   }
 
-  async openNewVMS(project_id: any = '') {
-    let rgg_data = localStorage.getItem('rgg_dashboard_auth')
-    if (rgg_data) {
-      let rgg_auth: any = JSON.parse(rgg_data)
-      console.log(rgg_auth)
-      let newWindow = `${environment.vmsUrl}?project_id=${project_id}&user_id=${rgg_auth.user[0].user_id}&call_id=${this.callRecordHistoryId}`
-      window.open(newWindow,'myWindow','width=800,height=900,left=100,top=100')
+  /**
+   * Open / navigate the VMS window for the accepted call.
+   * Pass `existingWindow` from a sync window.open() on the Accept click so
+   * popup blockers do not kill the async post-API open.
+   */
+  async openNewVMS(project_id: any = '', existingWindow: Window | null = null) {
+    const rgg_data = localStorage.getItem('rgg_dashboard_auth');
+    if (!rgg_data) {
+      console.error('openNewVMS: missing rgg_dashboard_auth');
+      if (existingWindow && !existingWindow.closed) {
+        existingWindow.close();
+      }
+      return;
+    }
+
+    const projectId = project_id || this.project_id;
+    if (!projectId) {
+      console.error('openNewVMS: missing project_id');
+      if (existingWindow && !existingWindow.closed) {
+        existingWindow.close();
+      }
+      return;
+    }
+
+    try {
+      const rgg_auth: any = JSON.parse(rgg_data);
+      const userId = rgg_auth?.user?.[0]?.user_id;
+      if (!userId) {
+        console.error('openNewVMS: missing user_id in auth');
+        if (existingWindow && !existingWindow.closed) {
+          existingWindow.close();
+        }
+        return;
+      }
+
+      const base = String(environment.vmsUrl || '').replace(/\/+$/, '');
+      const url =
+        `${base}?project_id=${encodeURIComponent(projectId)}` +
+        `&user_id=${encodeURIComponent(userId)}` +
+        `&call_id=${encodeURIComponent(String(this.callRecordHistoryId || ''))}`;
+
+      if (existingWindow && !existingWindow.closed) {
+        existingWindow.location.href = url;
+      } else {
+        window.open(url, 'myWindow', 'width=800,height=900,left=100,top=100');
+      }
+    } catch (e) {
+      console.error('openNewVMS failed:', e);
+      if (existingWindow && !existingWindow.closed) {
+        existingWindow.close();
+      }
     }
   }
 
@@ -645,87 +724,154 @@ export class CallService implements OnDestroy {
   }
 
   async acceptCallRecord(callRecord: any) {
-    // End previous ongoing call if exist
-    // await this.endCallRecord(this.ongoingCallRecord$);
+    // Open VMS window synchronously with the Accept click so popup blockers allow it.
+    // URL is filled in after /rgg/create-records returns.
+    let vmsWindow: Window | null = null;
+    try {
+      vmsWindow = window.open('about:blank', 'myWindow', 'width=800,height=900,left=100,top=100');
+    } catch (e) {
+      console.warn('Could not pre-open VMS window:', e);
+    }
 
     this.ongoingCallRecordSubject.next(callRecord);
-    this.createCallRecordHistory(callRecord);
-    console.log("======data");
-    console.log(this.ongoingCallRecord$)
+    this.callActionStatusSubject.next('');
+    this.project_id = callRecord.project_id || this.project_id;
+    this.createCallRecordHistory(callRecord, vmsWindow);
+
+    console.log('====== acceptCallRecord', callRecord);
     this.callerName = callRecord.caller_name;
-    const offer = callRecord.offer_obj;
+    const offer = this.parseJsonField(callRecord.offer_obj);
     this.callerSocketId = callRecord.caller_socket_id;
     this.receiverSocketId = callRecord.receiver_socket_id;
-    this.targetSocketIds = callRecord.target_socket_ids;
+    this.targetSocketIds = this.parseJsonField(callRecord.target_socket_ids);
 
-    await this.startLocalStream();
-    if (!this.peerConnection) {
-      this.peerConnection = new RTCPeerConnection({ iceServers: this.iceServers, iceTransportPolicy: 'all' });
-
-      if (!this.remoteStream) {
-        this.remoteStream = new MediaStream();
+    if (!offer || !offer.type || !offer.sdp) {
+      console.error('acceptCallRecord: invalid offer_obj', callRecord.offer_obj);
+      this.updateAudioStatus('Invalid call offer');
+      if (vmsWindow && !vmsWindow.closed) {
+        vmsWindow.close();
       }
-
-      this.peerConnection.onicecandidate = (event) => {
-        if (event.candidate) {
-          this.socket.emit('ice-candidate', event.candidate);
-        }
-      };
-
-      this.peerConnection.ontrack = (event) => {
-        this.remoteStream = event.streams[0];
-        const remoteVideo: HTMLVideoElement = document.getElementById('remote-video') as HTMLVideoElement;
-        if (remoteVideo) {
-          remoteVideo.srcObject = this.remoteStream;
-        }
-      };
-      this.peerConnection.oniceconnectionstatechange = () => {
-        const state = this.peerConnection.iceConnectionState;
-
-        switch (state) {
-          case "checking":
-            this.updateAudioStatus("Connecting audio...");
-            break;
-          case "connected":
-          case "completed":
-            this.updateAudioStatus("Audio connected");
-            break;
-        }
-      };
+      return;
     }
 
-    this.updateCallRecordState(callRecord.id, 'ongoing');
-    // await this.stopRingtone();
-    await this.peerConnection.setRemoteDescription(new RTCSessionDescription(offer));
-    this.remoteDescriptionSet = true;
-    for (const candidate of this.pendingCandidates) {
-      await this.peerConnection.addIceCandidate(candidate);
+    const streamOk = await this.startLocalStream(false);
+    if (!streamOk || !this.localStream) {
+      console.error('acceptCallRecord: failed to get local media');
+      this.updateAudioStatus('Microphone permission required');
+      if (vmsWindow && !vmsWindow.closed) {
+        vmsWindow.close();
+      }
+      return;
     }
 
-    this.localStream.getTracks().forEach(track => {
+    // Always rebuild PC when accepting a queued call so we don't reuse a stale connection
+    if (this.peerConnection) {
+      try {
+        this.peerConnection.close();
+      } catch {}
+      this.peerConnection = null!;
+    }
+
+    this.peerConnection = new RTCPeerConnection({
+      iceServers: this.iceServers,
+      iceTransportPolicy: 'all',
+    });
+    this.remoteStream = new MediaStream();
+    this.remoteDescriptionSet = false;
+    // Keep any ICE candidates buffered while the call was ringing in the RGG queue.
+    // Clearing them here was a common cause of black video (no media path).
+
+    this.localStream.getTracks().forEach((track) => {
       this.peerConnection.addTrack(track, this.localStream);
     });
 
-    const answer = await this.peerConnection.createAnswer();
-    await this.peerConnection.setLocalDescription(answer);
-    
-    this.startRecordingWithWebAudio(this.localStream, this.remoteStream)
+    this.peerConnection.onicecandidate = (event) => {
+      if (event.candidate) {
+        this.socket.emit('ice-candidate', event.candidate);
+      }
+    };
 
-    console.log("Trying to answer hereeee --->")
-    console.log(this.receiverSocketId);
-    console.log(this.socket.id);
-    this.receiverSocketId = this.socket.id
-    console.log("Trying to answer hereeee --->")
-    console.log(this.callerSocketId);
+    this.peerConnection.ontrack = (event) => {
+      const stream = event.streams?.[0] || new MediaStream([event.track]);
+      if (event.track) {
+        // Prefer accumulating into one remote stream so audio+video both attach
+        const already = this.remoteStream?.getTracks().some((t) => t.id === event.track.id);
+        if (!already) {
+          if (!this.remoteStream) {
+            this.remoteStream = new MediaStream();
+          }
+          this.remoteStream.addTrack(event.track);
+        }
+      } else if (stream) {
+        this.remoteStream = stream;
+      }
+      this.attachRemoteStream(this.remoteStream);
+      this.updateAudioStatus('Media connected');
+    };
 
-    this.socket.emit('answer', {
-      answerObj: answer,
-      receiverName: this.receiverName,
-      callerName: this.callerName,
-      callerSocketId: this.callerSocketId,
-      receiverSocketId: this.receiverSocketId
-    });
-    this.startCallTimer();
+    this.peerConnection.oniceconnectionstatechange = () => {
+      const state = this.peerConnection.iceConnectionState;
+      console.log('[acceptCallRecord] iceConnectionState:', state);
+      switch (state) {
+        case 'checking':
+          this.updateAudioStatus('Connecting media...');
+          break;
+        case 'connected':
+        case 'completed':
+          this.updateAudioStatus('Media connected');
+          this.regenerateVideo();
+          break;
+        case 'failed':
+          this.updateAudioStatus('Media connection failed');
+          break;
+        case 'disconnected':
+          this.updateAudioStatus('Media disconnected');
+          break;
+      }
+    };
+
+    this.updateCallRecordState(callRecord.id, 'ongoing');
+
+    try {
+      await this.peerConnection.setRemoteDescription(new RTCSessionDescription(offer));
+      this.remoteDescriptionSet = true;
+      for (const candidate of this.pendingCandidates) {
+        try {
+          await this.peerConnection.addIceCandidate(candidate);
+        } catch (e) {
+          console.warn('Failed to add pending ICE candidate:', e);
+        }
+      }
+
+      const answer = await this.peerConnection.createAnswer();
+      await this.peerConnection.setLocalDescription(answer);
+
+      this.receiverSocketId = this.socket.id;
+      this.socket.emit('answer', {
+        answerObj: answer,
+        receiverName: this.receiverName || 'Command Center',
+        callerName: this.callerName,
+        callerSocketId: this.callerSocketId,
+        receiverSocketId: this.receiverSocketId,
+      });
+
+      this.startCallTimer();
+      await this.showOngoingCallModal(true);
+      // Retry attach after UI paints Ongoing Call video element
+      setTimeout(() => this.regenerateVideo(), 250);
+
+      try {
+        this.startRecordingWithWebAudio(this.localStream, this.remoteStream);
+      } catch (e) {
+        console.warn('startRecordingWithWebAudio failed:', e);
+      }
+    } catch (e) {
+      console.error('acceptCallRecord WebRTC failed:', e);
+      this.updateAudioStatus('Failed to connect call');
+      if (vmsWindow && !vmsWindow.closed) {
+        vmsWindow.close();
+      }
+    }
   }
 
   async handleOngoingCallModal() {
@@ -1202,27 +1348,52 @@ export class CallService implements OnDestroy {
     this.socket.emit('intercom-restart-app', { intercom_id: intercom_id });
   }
 
-  async createCallRecordHistory(callRecord: any){{
+  async createCallRecordHistory(callRecord: any, vmsWindow: Window | null = null) {
+    if (!callRecord) {
+      if (vmsWindow && !vmsWindow.closed) {
+        vmsWindow.close();
+      }
+      return;
+    }
+
     const apiUrl = `${environment.apiUrl}/rgg/create-records`;
     const body = {
-      intercom_id: callRecord.intercom_id,
+      intercom_id: callRecord.intercom_id || '',
       caller_name: callRecord.caller_name,
-      family_id: callRecord.family_id,
+      family_id: callRecord.family_id || '',
+      project_id: callRecord.project_id || this.project_id || '',
       attended_by: this.userId,
     };
-    
+
     this.http.post<any>(apiUrl, body).subscribe({
       next: (response) => {
         console.log('Create call record history:', response);
         this.refreshCallLog();
         this.callRecordHistoryId = response.data;
-        this.openNewVMS(response.project_id)
-        console.log(this.callRecordHistoryId);
+        const projectId =
+          response.project_id || callRecord.project_id || this.project_id;
+        if (projectId) {
+          this.project_id = projectId;
+          this.openNewVMS(projectId, vmsWindow);
+        } else {
+          console.error('createCallRecordHistory: no project_id to open VMS');
+          if (vmsWindow && !vmsWindow.closed) {
+            vmsWindow.close();
+          }
+        }
       },
-      error: (err) => console.error('Error creating call record history:', err),
+      error: (err) => {
+        console.error('Error creating call record history:', err);
+        // Still try to open VMS with known project_id so operators can work the site
+        const projectId = callRecord.project_id || this.project_id;
+        if (projectId) {
+          this.openNewVMS(projectId, vmsWindow);
+        } else if (vmsWindow && !vmsWindow.closed) {
+          vmsWindow.close();
+        }
+      },
     });
-
-  }}
+  }
 
   getResidentProfilePic(callRecord: any){
     return `${environment.apiUrl}/web/image/fs.residential.family/${callRecord.family_id}/image_profile`
