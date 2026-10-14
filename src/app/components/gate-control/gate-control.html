@@ -51,16 +51,37 @@
                         Intercom
                     </button>
                 </div>
+
+                <!-- Schedule status indicator banner (for sites like Denselight with auto gate schedule) -->
+                <div *ngIf="isGate && autoGateScheduleEnabled" class="flex items-center justify-between bg-blue-50 border border-blue-200 px-2.5 py-1.5 rounded text-xs text-blue-800">
+                    <span class="flex items-center gap-1 font-medium">
+                        <svg class="w-3.5 h-3.5 text-blue-600 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                        Schedule (7 AM – 7 PM):
+                    </span>
+                    <span class="font-semibold px-1.5 py-0.5 rounded text-[11px]" [class.bg-emerald-100]="autoGateStatus === 'open'" [class.text-emerald-700]="autoGateStatus === 'open'" [class.bg-gray-100]="autoGateStatus === 'closed'" [class.text-gray-700]="autoGateStatus === 'closed'">
+                        {{ autoGateStatus === 'open' ? 'Open / Frozen' : 'Closed' }}
+                    </span>
+                </div>
+
                 @for (gate of ShowGates; track gate.id) {
                     <div class="flex justify-between items-center text-sm">
                         <div class="flex items-center">
                             <p class="font-medium text-gray-900">{{ gate?.name || "Gate" }}</p>
-                            <!-- atau lihat semua -->
+                            <!-- Badge for Gate vs Barrier when project has both -->
+                            <span *ngIf="isGate && gateBarrierMode === 'both'" class="text-[10px] px-1.5 py-0.5 rounded font-medium ms-1.5"
+                                  [class.bg-indigo-100]="gate?.target_type === 'gate'" [class.text-indigo-700]="gate?.target_type === 'gate'"
+                                  [class.bg-teal-100]="gate?.target_type === 'barrier'" [class.text-teal-700]="gate?.target_type === 'barrier'">
+                                {{ gate?.target_type === 'barrier' ? 'Barrier' : 'Gate' }}
+                            </span>
                         </div>
                         <div class="xl:space-x-2 flex flex-col xl:flex-row">
-                            <button class="text-emerald-400 hover:text-emerald-600 font-medium p-1 rounded hover:bg-emerald-50" (click)="openGate(gate, false, false)">Open Gate</button>
-                            <button *ngIf="isGate" class="text-amber-500 hover:text-amber-700 font-medium p-1 rounded hover:bg-amber-50" (click)="openGate(gate, false, true)">Freeze Gate</button>
-                            <button class="text-red-600 hover:text-red-800 font-medium p-1 rounded hover:bg-red-50" (click)="openGate(gate, true, false)">Close Gate</button>
+                            <button class="text-emerald-500 hover:text-emerald-700 font-medium p-1 rounded hover:bg-emerald-50" (click)="openGate(gate, false, false)">
+                                {{ isGate && gate?.target_type === 'barrier' ? 'Open Barrier' : 'Open Gate' }}
+                            </button>
+                            <button *ngIf="isGate && gate.can_freeze" class="text-amber-500 hover:text-amber-700 font-medium p-1 rounded hover:bg-amber-50" (click)="openGate(gate, false, true)">Freeze Gate</button>
+                            <button class="text-red-600 hover:text-red-800 font-medium p-1 rounded hover:bg-red-50" (click)="openGate(gate, true, false)">
+                                {{ isGate && gate?.target_type === 'barrier' ? 'Close Barrier' : 'Close Gate' }}
+                            </button>
                             
                             <!-- 3-dot Dropdown Menu -->
                             @if (isIntercom) {
