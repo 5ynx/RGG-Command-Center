@@ -1,6 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms'
-import { ChangeDetectorRef, Component, ElementRef, ViewChild } from '@angular/core';
+import { ChangeDetectorRef, Component, ElementRef, OnDestroy, ViewChild } from '@angular/core';
+import { Subscription } from 'rxjs';
 import { UrlApiService } from '../../service/url-api/url-api.service';
 import { CallService } from '../../service/call.service';
 
@@ -11,19 +12,34 @@ import { CallService } from '../../service/call.service';
   templateUrl: './gate-control.html',
   styleUrl: './gate-control.scss'
 })
-export class GateControl {
+export class GateControl implements OnDestroy {
 
   constructor(private ApiUrl: UrlApiService, private cdr: ChangeDetectorRef, private callService: CallService) {
 
   }
 
+  private gateResultSub?: Subscription;
+  /** True when Intercom action also drove matching LPR barriers (vehicle gate). */
+  private lastIntercomAlsoHitLpr = false;
+
   ngOnInit(): void {
     this.loadProjects();
     document.addEventListener('click', this.handleClickOutside, true);
+    this.gateResultSub = this.callService.intercomGateResult$.subscribe((result) => {
+      if (result && result.ok === false) {
+        // If we already closed/opened matching LPR, device-offline is non-fatal
+        if (this.lastIntercomAlsoHitLpr) {
+          return;
+        }
+        this.errMessage = result.error || `Intercom ${result.action || 'gate'} failed`;
+        this.cdr.detectChanges();
+      }
+    });
   }
 
   ngOnDestroy() {
     document.removeEventListener('click', this.handleClickOutside, true);
+    this.gateResultSub?.unsubscribe();
   }
 
   Gates: any = []
@@ -71,28 +87,63 @@ export class GateControl {
         this.errMessage = 'Freezing is not allowed for this gate';
         return;
       }
-      this.ApiUrl.urlApi('/rgg/open-barrier', { camera_id: gate.id, is_close: is_close, freeze: freeze }).subscribe({
-        next: (response) => {
-          this.isLoading = false;
-          if (response.code === 200) {
-          } else {
-            this.errMessage = response.message || 'Failed to load gates';
-          }
-        },
-        error: (err) => {
-          this.isLoading = false;
-          this.errMessage = 'Error fetching data from server';
-          console.error('Error fetching load gates:', err);
-        }
-      });
+      this.triggerLprBarrier(gate.id, is_close, freeze);
     } else {
-      console.log('gategategate', gate)
+      // Intercom tab: pulse the device door via signaling, and also drive matching
+      // LPR barriers (entry↔in / exit↔out) so Close actually affects the vehicle gate.
+      this.errMessage = '';
+      const matchingLprs = this.getMatchingLprGates(gate);
+      this.lastIntercomAlsoHitLpr = matchingLprs.length > 0;
       if (is_close) {
-        this.callService.closeGate(`Intercom-${gate.id}`)
+        this.callService.closeGate(`Intercom-${gate.id}`);
       } else {
-        this.callService.openGate(`Intercom-${gate.id}`)
+        this.callService.openGate(`Intercom-${gate.id}`);
       }
+      if (matchingLprs.length === 0) {
+        // Socket-only path; offline feedback comes via intercom-gate-result
+        return;
+      }
+      matchingLprs.forEach((lpr: any) => {
+        this.triggerLprBarrier(lpr.id, is_close, false);
+      });
     }
+  }
+
+  /** Map intercom entry/exit to LPR in/out cameras for the same project. */
+  private getMatchingLprGates(intercom: any): any[] {
+    if (!this.Gates?.length) {
+      return [];
+    }
+    const type = String(intercom?.intercom_type || '').toLowerCase();
+    const cameraType = type === 'entry' ? 'in' : type === 'exit' ? 'out' : '';
+    if (!cameraType) {
+      return [];
+    }
+    return this.Gates.filter(
+      (g: any) => String(g?.camera_type || '').toLowerCase() === cameraType
+    );
+  }
+
+  private triggerLprBarrier(cameraId: any, is_close: boolean, freeze: boolean) {
+    this.ApiUrl.urlApi('/rgg/open-barrier', {
+      camera_id: cameraId,
+      is_close: is_close,
+      freeze: freeze,
+    }).subscribe({
+      next: (response) => {
+        this.isLoading = false;
+        if (response.code !== 200) {
+          this.errMessage = response.message || 'Failed to control gate';
+          this.cdr.detectChanges();
+        }
+      },
+      error: (err) => {
+        this.isLoading = false;
+        this.errMessage = 'Error fetching data from server';
+        console.error('Error controlling gate:', err);
+        this.cdr.detectChanges();
+      },
+    });
   }
 
   callIntercom(gate: any) {
