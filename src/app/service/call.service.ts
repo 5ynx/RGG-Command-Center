@@ -115,9 +115,19 @@ export class CallService implements OnDestroy {
       this.socket.on('sender-pending-call', (data: any) => this.handleSenderPendingCall(data));
       this.socket.on('open-modal-call', (data: any) => this.handleOngoingCallModal());
       this.socket.on('refresh-incoming-call', (data: any) => this.refreshCallLog());
+      this.socket.on('intercom-gate-result', (data: any) => this.handleIntercomGateResult(data));
     } catch (error) {
       console.error('Error during socket initialization:', error);
     }
+  }
+
+  /** Last intercom gate socket result (for Gate Control UI). */
+  private intercomGateResultSubject = new BehaviorSubject<any>(null);
+  intercomGateResult$ = this.intercomGateResultSubject.asObservable();
+
+  private handleIntercomGateResult(data: any) {
+    console.log('[intercom-gate-result]', data);
+    this.intercomGateResultSubject.next(data);
   }
   
 
@@ -1329,10 +1339,28 @@ export class CallService implements OnDestroy {
   }}
 
   async openGate(intercom_id: any) {
+    if (!this.socket?.connected) {
+      this.intercomGateResultSubject.next({
+        ok: false,
+        action: 'open',
+        intercom_id,
+        error: 'Command Center is not connected to signaling',
+      });
+      return;
+    }
     this.socket.emit('intercom-open-gate', { intercom_id: intercom_id, opened_by: 'rgg' });
   }
 
   async closeGate(intercom_id: any) {
+    if (!this.socket?.connected) {
+      this.intercomGateResultSubject.next({
+        ok: false,
+        action: 'close',
+        intercom_id,
+        error: 'Command Center is not connected to signaling',
+      });
+      return;
+    }
     this.socket.emit('intercom-close-gate', { intercom_id: intercom_id });
   }
 
