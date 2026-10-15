@@ -1,5 +1,5 @@
 export const environment = {
   production: true,
-  apiUrl: 'https://backend-ifs360.sgeede.com',
+  apiUrl: 'https://ifs360-sg.com/',
   vmsUrl: 'https://ifs360.sgeede.com/login-vms',
 };
