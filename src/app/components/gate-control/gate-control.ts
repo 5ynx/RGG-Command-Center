@@ -70,7 +70,11 @@ export class GateControl implements OnDestroy {
         } else {
           this.errMessage = response.message || 'Failed to load gates';
         }
-        this.changeButton(true)
+        // Rebind the visible list even if that tab is already selected.
+        // changeButton used to no-op when isGate/isIntercom was already true,
+        // so switching projects left the previous site's gates on screen.
+        const showLpr = this.isGate || !this.isIntercom;
+        this.changeButton(showLpr)
         this.cdr.detectChanges();
       },
       error: (err) => {
@@ -211,6 +215,7 @@ export class GateControl implements OnDestroy {
       this.selectedProject = false
       this.Gates = []
       this.Intercom = []
+      this.ShowGates = []
     } else {
       this.selectedProject = project
       this.search_project = ''
@@ -244,17 +249,13 @@ export class GateControl implements OnDestroy {
 
   changeButton(is_gate: boolean = true) {
     if (is_gate) {
-      if (!this.isGate) {
-        this.isIntercom = false
-        this.isGate = true
-        this.ShowGates = this.Gates
-      }
+      this.isIntercom = false
+      this.isGate = true
+      this.ShowGates = this.Gates
     } else {
-      if (!this.isIntercom) {
-        this.isIntercom = true
-        this.isGate = false
-        this.ShowGates = this.Intercom
-      }
+      this.isIntercom = true
+      this.isGate = false
+      this.ShowGates = this.Intercom
     }
   }
 }
