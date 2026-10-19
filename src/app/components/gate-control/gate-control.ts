@@ -91,10 +91,14 @@ export class GateControl implements OnDestroy {
         this.errMessage = 'Freezing is not allowed for this gate';
         return;
       }
-      this.triggerLprBarrier(gate.id, is_close, freeze);
+      if (freeze && gate?.control_target === 'barrier') {
+        this.errMessage = 'Freezing is only supported for the main gate';
+        return;
+      }
+      this.triggerLprBarrier(gate, is_close, freeze);
     } else {
       // Intercom tab: pulse the device door via signaling, and also drive matching
-      // LPR barriers (entry↔in / exit↔out) so Close actually affects the vehicle gate.
+      // LPR gates (entry↔in / exit↔out) so Close actually affects the vehicle gate.
       this.errMessage = '';
       const matchingLprs = this.getMatchingLprGates(gate);
       this.lastIntercomAlsoHitLpr = matchingLprs.length > 0;
@@ -108,7 +112,7 @@ export class GateControl implements OnDestroy {
         return;
       }
       matchingLprs.forEach((lpr: any) => {
-        this.triggerLprBarrier(lpr.id, is_close, false);
+        this.triggerLprBarrier(lpr, is_close, false);
       });
     }
   }
@@ -123,16 +127,30 @@ export class GateControl implements OnDestroy {
     if (!cameraType) {
       return [];
     }
-    return this.Gates.filter(
+    // Prefer main-gate controls (web relay) so intercom open/close does not also
+    // pulse every dual Gate+Barrier row for the same camera.
+    const sameSide = this.Gates.filter(
       (g: any) => String(g?.camera_type || '').toLowerCase() === cameraType
     );
+    const gatesOnly = sameSide.filter(
+      (g: any) => (g?.control_target || g?.target_type || 'gate') === 'gate'
+    );
+    return gatesOnly.length ? gatesOnly : sameSide;
   }
 
-  private triggerLprBarrier(cameraId: any, is_close: boolean, freeze: boolean) {
+  private triggerLprBarrier(gateOrId: any, is_close: boolean, freeze: boolean) {
+    const cameraId = typeof gateOrId === 'object'
+      ? (gateOrId.camera_id ?? gateOrId.id)
+      : gateOrId;
+    const controlTarget = typeof gateOrId === 'object'
+      ? (gateOrId.control_target || gateOrId.target_type || '')
+      : '';
+
     this.ApiUrl.urlApi('/rgg/open-barrier', {
       camera_id: cameraId,
       is_close: is_close,
       freeze: freeze,
+      control_target: controlTarget,
     }).subscribe({
       next: (response) => {
         this.isLoading = false;

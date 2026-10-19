@@ -73,18 +73,18 @@
                             <p class="font-medium text-gray-900">{{ gate?.name || "Gate" }}</p>
                             <!-- Badge for Gate vs Barrier when project has both -->
                             <span *ngIf="isGate && gateBarrierMode === 'both'" class="text-[10px] px-1.5 py-0.5 rounded font-medium ms-1.5"
-                                  [class.bg-indigo-100]="gate?.target_type === 'gate'" [class.text-indigo-700]="gate?.target_type === 'gate'"
-                                  [class.bg-teal-100]="gate?.target_type === 'barrier'" [class.text-teal-700]="gate?.target_type === 'barrier'">
-                                {{ gate?.target_type === 'barrier' ? 'Barrier' : 'Gate' }}
+                                  [class.bg-indigo-100]="(gate?.control_target || gate?.target_type) === 'gate'" [class.text-indigo-700]="(gate?.control_target || gate?.target_type) === 'gate'"
+                                  [class.bg-teal-100]="(gate?.control_target || gate?.target_type) === 'barrier'" [class.text-teal-700]="(gate?.control_target || gate?.target_type) === 'barrier'">
+                                {{ (gate?.control_target || gate?.target_type) === 'barrier' ? 'Barrier' : 'Gate' }}
                             </span>
                         </div>
                         <div class="xl:space-x-2 flex flex-col xl:flex-row">
                             <button class="text-emerald-500 hover:text-emerald-700 font-medium p-1 rounded hover:bg-emerald-50" (click)="openGate(gate, false, false)">
-                                {{ isGate && gate?.target_type === 'barrier' ? 'Open Barrier' : 'Open Gate' }}
+                                {{ isGate && (gate?.control_target || gate?.target_type) === 'barrier' ? 'Open Barrier' : 'Open Gate' }}
                             </button>
-                            <button *ngIf="isGate && gate.can_freeze" class="text-amber-500 hover:text-amber-700 font-medium p-1 rounded hover:bg-amber-50" (click)="openGate(gate, false, true)">Freeze Gate</button>
+                            <button *ngIf="isGate && gate.can_freeze && (gate?.control_target || gate?.target_type) !== 'barrier'" class="text-amber-500 hover:text-amber-700 font-medium p-1 rounded hover:bg-amber-50" (click)="openGate(gate, false, true)">Freeze Gate</button>
                             <button class="text-red-600 hover:text-red-800 font-medium p-1 rounded hover:bg-red-50" (click)="openGate(gate, true, false)">
-                                {{ isGate && gate?.target_type === 'barrier' ? 'Close Barrier' : 'Close Gate' }}
+                                {{ isGate && (gate?.control_target || gate?.target_type) === 'barrier' ? 'Close Barrier' : 'Close Gate' }}
                             </button>
                             
                             <!-- 3-dot Dropdown Menu -->
