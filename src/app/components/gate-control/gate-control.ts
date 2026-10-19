@@ -91,10 +91,6 @@ export class GateControl implements OnDestroy {
         this.errMessage = 'Freezing is not allowed for this gate';
         return;
       }
-      if (freeze && gate?.control_target === 'barrier') {
-        this.errMessage = 'Freezing is only supported for the main gate';
-        return;
-      }
       this.triggerLprBarrier(gate, is_close, freeze);
     } else {
       // Intercom tab: pulse the device door via signaling, and also drive matching
