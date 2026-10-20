@@ -123,15 +123,14 @@ export class GateControl implements OnDestroy {
     if (!cameraType) {
       return [];
     }
-    // Prefer main-gate controls (web relay) so intercom open/close does not also
-    // pulse every dual Gate+Barrier row for the same camera.
     const sameSide = this.Gates.filter(
       (g: any) => String(g?.camera_type || '').toLowerCase() === cameraType
+        && g?.trigger_method !== 'web_relay'
     );
-    const gatesOnly = sameSide.filter(
-      (g: any) => (g?.control_target || g?.target_type || 'gate') === 'gate'
+    const barriers = sameSide.filter(
+      (g: any) => (g?.control_target || g?.target_type) === 'barrier'
     );
-    return gatesOnly.length ? gatesOnly : sameSide;
+    return barriers.length ? barriers : sameSide;
   }
 
   private triggerLprBarrier(gateOrId: any, is_close: boolean, freeze: boolean) {
@@ -141,12 +140,17 @@ export class GateControl implements OnDestroy {
     const controlTarget = typeof gateOrId === 'object'
       ? (gateOrId.control_target || gateOrId.target_type || '')
       : '';
+    const triggerMethod = typeof gateOrId === 'object'
+      ? (gateOrId.trigger_method || '')
+      : '';
 
     this.ApiUrl.urlApi('/rgg/open-barrier', {
       camera_id: cameraId,
       is_close: is_close,
       freeze: freeze,
       control_target: controlTarget,
+      trigger_method: triggerMethod,
+      project_id: this.selectedProject?.id,
     }).subscribe({
       next: (response) => {
         this.isLoading = false;
