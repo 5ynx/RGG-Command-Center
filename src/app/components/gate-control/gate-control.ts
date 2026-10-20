@@ -145,7 +145,7 @@ export class GateControl implements OnDestroy {
       : '';
 
     this.ApiUrl.urlApi('/rgg/open-barrier', {
-      camera_id: cameraId,
+      camera_id: triggerMethod === 'web_relay' ? 'relay' : cameraId,
       is_close: is_close,
       freeze: freeze,
       control_target: controlTarget,
@@ -161,7 +161,7 @@ export class GateControl implements OnDestroy {
       },
       error: (err) => {
         this.isLoading = false;
-        this.errMessage = 'Error fetching data from server';
+        this.errMessage = err?.error?.message || err?.error?.error || 'Error fetching data from server';
         console.error('Error controlling gate:', err);
         this.cdr.detectChanges();
       },
