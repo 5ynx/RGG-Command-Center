@@ -1,10 +1,11 @@
 import { ChangeDetectorRef, Component, ElementRef, NgZone, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { CallService } from '../../service/call.service';
 
 @Component({
   selector: 'app-video-calls',
-  imports: [CommonModule],
+  imports: [CommonModule, FormsModule],
   standalone: true,
   templateUrl: './video-calls.html',
   styleUrl: './video-calls.scss'
@@ -14,7 +15,6 @@ export class VideoCalls {
   
   callDuration: string = '00:00';
   
-
   constructor(
     private callService: CallService, 
     private zone: NgZone,
@@ -25,9 +25,28 @@ export class VideoCalls {
   callStatus: any;
   screenshotBase64: any = '';
 
+  // Visitor 2nd Gate QR Modal State
+  isVisitorModalOpen: boolean = false;
+  visitorPhone: string = '';
+  visitorName: string = '';
+  visitorVehicle: string = '';
+  visitorRemarks: string = '';
+  isDispatching: boolean = false;
+  dispatchError: string = '';
+  dispatchSuccess: string = '';
+  dispatchChannel: string = 'sms';
+  secondGateQrEnabled: boolean = true;
+
   ngOnInit(): void {
     this.callService.ongoingCallRecord$.subscribe(record => {
       this.ongoingCallRecord = record;
+    });
+
+    this.callService.projectVisitorQrConfig$.subscribe(cfg => {
+      if (cfg) {
+        this.dispatchChannel = cfg.channel || 'sms';
+        this.secondGateQrEnabled = cfg.enabled !== false;
+      }
     });
 
     this.callService.callActionStatus$.subscribe(status => {
@@ -43,6 +62,76 @@ export class VideoCalls {
         this.cdr.markForCheck();
       })
     })
+  }
+
+  openVisitorModal() {
+    this.dispatchError = '';
+    this.dispatchSuccess = '';
+    this.visitorPhone = '';
+    this.visitorName = this.ongoingCallRecord?.caller_name || '';
+    this.visitorVehicle = '';
+    this.visitorRemarks = '';
+    this.isDispatching = false;
+    this.isVisitorModalOpen = true;
+    this.cdr.detectChanges();
+  }
+
+  closeVisitorModal() {
+    this.isVisitorModalOpen = false;
+    this.cdr.detectChanges();
+  }
+
+  sendVisitorQr(openGateAfterDispatch: boolean = false) {
+    if (!this.visitorPhone || !this.visitorPhone.trim()) {
+      this.dispatchError = 'Visitor phone number is required';
+      return;
+    }
+
+    const projectId = this.ongoingCallRecord?.project_id || this.callService.getActiveProjectId();
+    if (!projectId) {
+      this.dispatchError = 'No project associated with this call';
+      return;
+    }
+
+    this.isDispatching = true;
+    this.dispatchError = '';
+    this.dispatchSuccess = '';
+
+    const payload = {
+      project_id: projectId,
+      intercom_id: this.ongoingCallRecord?.intercom_id || '',
+      contact_number: this.visitorPhone.trim(),
+      visitor_name: (this.visitorName || 'Visitor').trim(),
+      vehicle_number: (this.visitorVehicle || '').trim().toUpperCase(),
+      call_record_id: this.callService.getActiveCallRecordId() || '',
+      remarks: (this.visitorRemarks || '').trim(),
+      open_gate: openGateAfterDispatch,
+    };
+
+    this.callService.dispatchVisitorQr(payload).subscribe({
+      next: (res) => {
+        this.isDispatching = false;
+        if (res.code === 200) {
+          const barcode = res.result?.barcode || '';
+          const statusText = res.result?.status || 'Sent';
+          this.dispatchSuccess = `Pass ${barcode} dispatched successfully (${statusText})!`;
+          if (openGateAfterDispatch) {
+            this.openBarrier();
+          }
+          setTimeout(() => {
+            this.closeVisitorModal();
+          }, 2500);
+        } else {
+          this.dispatchError = res.message || 'Failed to dispatch pass';
+        }
+        this.cdr.detectChanges();
+      },
+      error: (err) => {
+        this.isDispatching = false;
+        this.dispatchError = err?.error?.message || err?.message || 'Error communicating with server';
+        this.cdr.detectChanges();
+      }
+    });
   }
 
   async takeSnapshot() {

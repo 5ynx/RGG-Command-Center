@@ -68,6 +68,7 @@ export class CallService implements OnDestroy {
   refreshHistoryTrigger$ = this.refreshHistoryTrigger.asObservable();
   private callDurationSubject = new BehaviorSubject<string>('00:00');
   callDuration$ = this.callDurationSubject.asObservable();
+  projectVisitorQrConfig$ = new BehaviorSubject<{ enabled: boolean, channel: string }>({ enabled: true, channel: 'sms' });
 
   constructor(
     private route: ActivatedRoute,
@@ -1398,6 +1399,9 @@ export class CallService implements OnDestroy {
         console.log('Create call record history:', response);
         this.refreshCallLog();
         this.callRecordHistoryId = response.data;
+        if (response.visitor_qr_config) {
+          this.projectVisitorQrConfig$.next(response.visitor_qr_config);
+        }
         const projectId =
           response.project_id || callRecord.project_id || this.project_id;
         if (projectId) {
@@ -1425,6 +1429,28 @@ export class CallService implements OnDestroy {
 
   getResidentProfilePic(callRecord: any){
     return `${environment.apiUrl}/web/image/fs.residential.family/${callRecord.family_id}/image_profile`
+  }
+
+  getActiveCallRecordId(): number {
+    return this.callRecordHistoryId;
+  }
+
+  getActiveProjectId(): any {
+    return this.project_id;
+  }
+
+  dispatchVisitorQr(payload: {
+    project_id: any;
+    intercom_id?: any;
+    contact_number: string;
+    visitor_name?: string;
+    vehicle_number?: string;
+    call_record_id?: any;
+    remarks?: string;
+    open_gate?: boolean;
+  }): Observable<any> {
+    const apiUrl = `${environment.apiUrl}/rgg/dispatch-visitor-qr`;
+    return this.http.post<any>(apiUrl, payload);
   }
 
   public rggState: any = 'standby'
